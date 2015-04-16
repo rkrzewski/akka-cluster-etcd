@@ -1,0 +1,184 @@
+package pl.caltha.akka.etcd
+
+import scala.concurrent.Future
+import org.scalatest._
+import org.scalatest.time._
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.Matchers._
+import akka.actor.ActorSystem
+
+class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
+
+  implicit val system = ActorSystem()
+
+  implicit val exCtx = system.dispatcher
+
+  val etcd = new EtcdClient("localhost")
+
+  implicit val defaultPatience =
+    PatienceConfig(timeout = Span(5, Seconds), interval = Span(100, Millis))
+
+  val baseKey = s"${(Math.random() * Int.MaxValue).toInt}/"
+
+  "etcd client" should "get and set individual keys" in {
+    whenReady(for {
+      _ <- etcd.set(baseKey + "one", "1")
+      resp <- etcd.get(baseKey + "one")
+    } yield resp) { resp =>
+      resp should matchPattern {
+        case EtcdResponse("get", EtcdNode(_, _, _, Some("1"), _, None), _) =>
+      }
+    }
+  }
+
+  it should "create and delete individual keys" in {
+    whenReady(for {
+      _ <- etcd.set(baseKey + "simple", "one")
+      resp <- etcd.delete(baseKey + "simple")
+    } yield resp) { resp =>
+      resp should matchPattern {
+        case EtcdResponse("delete", _, _) =>
+      }
+
+      whenReady(etcd.get(baseKey + "simple").recover {
+        case ex: EtcdCommandException => ex.error
+      }) { err =>
+        err should matchPattern {
+          case EtcdError(100, _, _, _) =>
+        }
+      }
+    }
+  }
+
+  it should "create directories and list their contents" in {
+    whenReady(for {
+      _ <- etcd.createDir(baseKey + "dir")
+      _ <- etcd.set(baseKey + "dir/one", "1")
+      _ <- etcd.set(baseKey + "dir/two", "2")
+      _ <- etcd.set(baseKey + "dir/three", "3")
+      resp <- etcd.get(baseKey + "dir", recursive = Some(true))
+    } yield resp) { resp =>
+      inside(resp) {
+        case EtcdResponse("get", EtcdNode(_, _, _, _, Some(true), Some(nodes)), _) =>
+          nodes collect {
+            case EtcdNode(_, _, _, Some(value), _, _) => value
+          } should contain allOf ("1", "2", "3")
+      }
+    }
+  }
+
+  it should "create directories and delete them recursively" in {
+    whenReady(for {
+      _ <- etcd.createDir(baseKey + "dir2")
+      _ <- etcd.set(baseKey + "dir2/one", "1")
+      _ <- etcd.set(baseKey + "dir2/two", "2")
+      _ <- etcd.set(baseKey + "dir2/three", "3")
+      _ <- etcd.delete(baseKey + "dir2", recursive = true)
+      err <- etcd.get(baseKey + "dir2", recursive = Some(true)).recover {
+        case ex: EtcdCommandException => ex.error
+      }
+    } yield err) { err =>
+      err should matchPattern {
+        case EtcdError(100, _, _, _) =>
+      }
+    }
+  }
+
+  it should "set keys conditionally, wrt. key's existence" in {
+    whenReady(etcd.compareAndSet(baseKey + "atom1", "1", prevExist = Some(false))) { resp1 =>
+      resp1 should matchPattern {
+        case EtcdResponse("create", _, _) =>
+      }
+
+      whenReady(etcd.compareAndSet(baseKey + "atom1", "1", prevExist = Some(false)).recover {
+        case ex: EtcdCommandException => ex.error
+      }) { resp2 =>
+        resp2 should matchPattern {
+          case EtcdError(105, _, _, _) =>
+        }
+      }
+    }
+  }
+
+  it should "set keys conditionally, wrt. key's current value" in {
+    whenReady(for {
+      _ <- etcd.set(baseKey + "atom2", "1")
+      resp1 <- etcd.compareAndSet(baseKey + "atom2", "2", prevValue = Some("1"))
+    } yield resp1) { resp1 =>
+      resp1 should matchPattern {
+        case EtcdResponse("compareAndSwap", _, _) =>
+      }
+
+      whenReady(etcd.compareAndSet(baseKey + "atom2", "3", prevValue = Some("1")).recover {
+        case ex: EtcdCommandException => ex.error
+      }) { resp2 =>
+        resp2 should matchPattern {
+          case EtcdError(101, _, _, _) =>
+        }
+      }
+    }
+  }
+
+  it should "set keys conditionally, wrt. key's last write index" in {
+    whenReady(etcd.set(baseKey + "atom3", "1")) { resp1 =>
+      inside(resp1) {
+        case EtcdResponse("set", EtcdNode(_, createdIndex, _, Some("1"), _, None), _) =>
+
+          whenReady(etcd.compareAndSet(baseKey + "atom3", "2", prevIndex = Some(createdIndex))) { resp2 =>
+            resp2 should matchPattern {
+              case EtcdResponse("compareAndSwap", _, _) =>
+            }
+
+            whenReady(etcd.compareAndSet(baseKey + "atom2", "3", prevIndex = Some(createdIndex)).recover {
+              case ex: EtcdCommandException => ex.error
+            }) { resp3 =>
+              resp3 should matchPattern {
+                case EtcdError(101, _, _, _) =>
+              }
+            }
+          }
+      }
+    }
+  }
+
+  it should "delete keys conditionally, wrt. key's current value" in {
+    whenReady(for {
+      _ <- etcd.set(baseKey + "atom4", "1")
+      resp1 <- etcd.compareAndDelete(baseKey + "atom4", prevValue = Some("2")).recover {
+        case ex: EtcdCommandException => ex.error
+      }
+    } yield resp1) { resp1 =>
+      resp1 should matchPattern {
+        case EtcdError(101, _, _, _) =>
+      }
+
+      whenReady(etcd.compareAndDelete(baseKey + "atom4", prevValue = Some("1"))) { resp2 =>
+        resp2 should matchPattern {
+          case EtcdResponse("compareAndDelete", _, _) =>
+        }
+      }
+    }
+  }
+
+  it should "delete keys conditionally, wrt. key's last write index" in {
+    whenReady(etcd.set(baseKey + "atom5", "1")) { resp1 =>
+      inside(resp1) {
+        case EtcdResponse("set", EtcdNode(_, createdIndex, _, Some("1"), _, None), _) =>
+
+          whenReady(etcd.compareAndDelete(baseKey + "atom5", prevIndex = Some(createdIndex - 1)).recover {
+            case ex: EtcdCommandException => ex.error
+          }) { resp2 =>
+            resp2 should matchPattern {
+              case EtcdError(101, _, _, _) =>
+            }
+
+            whenReady(etcd.compareAndDelete(baseKey + "atom5", prevIndex = Some(createdIndex))) { resp3 =>
+              resp3 should matchPattern {
+                case EtcdResponse("compareAndDelete", _, _) =>
+              }
+            }
+          }
+      }
+    }
+  }
+}
