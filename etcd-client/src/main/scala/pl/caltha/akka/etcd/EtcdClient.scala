@@ -28,15 +28,15 @@ import spray.json.pimpString
 
 class EtcdClient(host: String, port: Int = 4001,
     socketOptions: Traversable[SocketOption] = Nil,
-    httpClientSettings: Option[ClientConnectionSettings] = None,
-    etcdOptions: Traversable[EtcdOption] = Nil)(implicit system: ActorSystem) {
+    httpClientSettings: Option[ClientConnectionSettings] = None)(implicit system: ActorSystem) {
 
   def get(key: String, recursive: Option[Boolean] = None, sorted: Option[Boolean] = None): Future[EtcdResponse] =
     run(GET, key, "recursive" -> recursive, "sorted" -> sorted)
 
-  def wait(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None, sorted: Option[Boolean] = None): Future[EtcdResponse] =
+  def wait(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None,
+    sorted: Option[Boolean] = None, quorum: Option[Boolean] = None): Future[EtcdResponse] =
     run(GET, key, "wait" -> Some(true), "waitIndex" -> waitIndex,
-      "recursive" -> recursive, "sorted" -> sorted)
+      "recursive" -> recursive, "sorted" -> sorted, "quorum" -> quorum)
 
   def set(key: String, value: String, ttl: Option[Int] = None): Future[EtcdResponse] =
     run(PUT, key, "value" -> Some(value), "ttl" -> ttl)
