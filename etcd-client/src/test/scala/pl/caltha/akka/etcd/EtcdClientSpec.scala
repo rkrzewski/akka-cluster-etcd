@@ -1,10 +1,12 @@
 package pl.caltha.akka.etcd
 
 import scala.concurrent.Future
+
 import org.scalatest._
-import org.scalatest.time._
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.Matchers._
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time._
+
 import akka.actor.ActorSystem
 
 class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
@@ -186,10 +188,37 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
         case EtcdResponse("get", EtcdNode(_, _, _, _, Some(true), Some(nodes)), _) =>
           val Key = s"/${baseKey}dir3/(\\d+)".r
           val (keys, values) = (nodes collect {
-            case EtcdNode(Key(seq), _, _, Some(value), _, _) => (seq.toInt, value)             
+            case EtcdNode(Key(seq), _, _, Some(value), _, _) => (seq.toInt, value)
           }).unzip
           keys shouldBe sorted
           values should contain inOrderOnly ("1", "2", "3")
+      }
+    }
+  }
+
+  it should "wait for key updates" in {
+    whenReady(etcd.set("wait1", "1")) { resp1 =>
+      val index = resp1.node.modifiedIndex
+      etcd.set("wait1", "2")
+      whenReady(for {
+        resp2 <- etcd.wait("wait1", waitIndex = Some(index + 1))
+      } yield resp2) { resp2 =>
+        resp2 should matchPattern {
+          case EtcdResponse("set", EtcdNode(_, _, _, Some("2"), _, None), Some(EtcdNode(_, _, _, Some("1"), _, None))) =>
+        }
+      }
+    }
+  }
+  
+  it should "replay key updates that happened in the past" in {
+    whenReady(etcd.set("wait2", "1")) { resp1 =>
+      val index = resp1.node.modifiedIndex
+      whenReady(for {
+        resp2 <- etcd.wait("wait2", waitIndex = Some(index))
+      } yield resp2) { resp2 =>
+        resp2 should matchPattern {
+          case EtcdResponse("set", EtcdNode(_, _, _, Some("1"), _, None), None) =>
+        }
       }
     }
   }
