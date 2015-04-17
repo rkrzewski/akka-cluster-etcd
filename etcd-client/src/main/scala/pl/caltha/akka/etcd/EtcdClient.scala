@@ -34,9 +34,9 @@ class EtcdClient(host: String, port: Int = 4001,
   def get(key: String, recursive: Option[Boolean] = None, sorted: Option[Boolean] = None): Future[EtcdResponse] =
     run(GET, key, "recursive" -> recursive, "sorted" -> sorted)
 
-  def wait(key: String, waitKey: Option[Int] = None, recursive: Option[Boolean] = None, sorted: Option[Boolean] = None): Future[EtcdResponse] =
-    run(GET, key, "wait" -> Some(true), "waitKey" -> waitKey,
-      "recursive" -> recursive, "sorted" -> Some(sorted))
+  def wait(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None, sorted: Option[Boolean] = None): Future[EtcdResponse] =
+    run(GET, key, "wait" -> Some(true), "waitIndex" -> waitIndex,
+      "recursive" -> recursive, "sorted" -> sorted)
 
   def set(key: String, value: String, ttl: Option[Int] = None): Future[EtcdResponse] =
     run(PUT, key, "value" -> Some(value), "ttl" -> ttl)
