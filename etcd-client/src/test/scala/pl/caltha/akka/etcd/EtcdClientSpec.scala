@@ -19,8 +19,8 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(100, Millis))
 
   implicit class RecoverError(resp: Future[EtcdResponse]) {
-    def error: Future[Any] = resp.recover {
-      case ex: EtcdCommandException => ex.error
+    def error: Future[EtcdMessage] = resp.recover {
+      case ex: EtcdException => ex.error
     }
   }
 
