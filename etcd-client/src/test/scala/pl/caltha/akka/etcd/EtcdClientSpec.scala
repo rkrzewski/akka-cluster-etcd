@@ -18,6 +18,12 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
   implicit val defaultPatience =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(100, Millis))
 
+  implicit class RecoverError(resp: Future[EtcdResponse]) {
+    def error: Future[Any] = resp.recover {
+      case ex: EtcdCommandException => ex.error
+    }
+  }
+
   val baseKey = s"${(Math.random() * Int.MaxValue).toInt}/"
 
   "etcd client" should "get and set individual keys" in {
@@ -35,15 +41,13 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
     whenReady(for {
       _ <- etcd.set(baseKey + "simple", "one")
       resp <- etcd.delete(baseKey + "simple")
-    } yield resp) { resp =>
-      resp should matchPattern {
+    } yield resp) { resp1 =>
+      resp1 should matchPattern {
         case EtcdResponse("delete", _, _) =>
       }
 
-      whenReady(etcd.get(baseKey + "simple").recover {
-        case ex: EtcdCommandException => ex.error
-      }) { err =>
-        err should matchPattern {
+      whenReady(etcd.get(baseKey + "simple").error) { resp2 =>
+        resp2 should matchPattern {
           case EtcdError(100, _, _, _) =>
         }
       }
@@ -74,11 +78,9 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       _ <- etcd.set(baseKey + "dir2/two", "2")
       _ <- etcd.set(baseKey + "dir2/three", "3")
       _ <- etcd.delete(baseKey + "dir2", recursive = true)
-      err <- etcd.get(baseKey + "dir2", recursive = Some(true)).recover {
-        case ex: EtcdCommandException => ex.error
-      }
-    } yield err) { err =>
-      err should matchPattern {
+      resp <- etcd.get(baseKey + "dir2", recursive = Some(true)).error
+    } yield resp) { resp =>
+      resp should matchPattern {
         case EtcdError(100, _, _, _) =>
       }
     }
@@ -90,9 +92,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
         case EtcdResponse("create", _, _) =>
       }
 
-      whenReady(etcd.compareAndSet(baseKey + "atom1", "1", prevExist = Some(false)).recover {
-        case ex: EtcdCommandException => ex.error
-      }) { resp2 =>
+      whenReady(etcd.compareAndSet(baseKey + "atom1", "1", prevExist = Some(false)).error) { resp2 =>
         resp2 should matchPattern {
           case EtcdError(105, _, _, _) =>
         }
@@ -109,9 +109,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
         case EtcdResponse("compareAndSwap", _, _) =>
       }
 
-      whenReady(etcd.compareAndSet(baseKey + "atom2", "3", prevValue = Some("1")).recover {
-        case ex: EtcdCommandException => ex.error
-      }) { resp2 =>
+      whenReady(etcd.compareAndSet(baseKey + "atom2", "3", prevValue = Some("1")).error) { resp2 =>
         resp2 should matchPattern {
           case EtcdError(101, _, _, _) =>
         }
@@ -129,9 +127,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
               case EtcdResponse("compareAndSwap", _, _) =>
             }
 
-            whenReady(etcd.compareAndSet(baseKey + "atom2", "3", prevIndex = Some(createdIndex)).recover {
-              case ex: EtcdCommandException => ex.error
-            }) { resp3 =>
+            whenReady(etcd.compareAndSet(baseKey + "atom2", "3", prevIndex = Some(createdIndex)).error) { resp3 =>
               resp3 should matchPattern {
                 case EtcdError(101, _, _, _) =>
               }
@@ -144,9 +140,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
   it should "delete keys conditionally, wrt. key's current value" in {
     whenReady(for {
       _ <- etcd.set(baseKey + "atom4", "1")
-      resp1 <- etcd.compareAndDelete(baseKey + "atom4", prevValue = Some("2")).recover {
-        case ex: EtcdCommandException => ex.error
-      }
+      resp1 <- etcd.compareAndDelete(baseKey + "atom4", prevValue = Some("2")).error
     } yield resp1) { resp1 =>
       resp1 should matchPattern {
         case EtcdError(101, _, _, _) =>
@@ -165,9 +159,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       inside(resp1) {
         case EtcdResponse("set", EtcdNode(_, createdIndex, _, Some("1"), _, None), _) =>
 
-          whenReady(etcd.compareAndDelete(baseKey + "atom5", prevIndex = Some(createdIndex - 1)).recover {
-            case ex: EtcdCommandException => ex.error
-          }) { resp2 =>
+          whenReady(etcd.compareAndDelete(baseKey + "atom5", prevIndex = Some(createdIndex - 1)).error) { resp2 =>
             resp2 should matchPattern {
               case EtcdError(101, _, _, _) =>
             }
