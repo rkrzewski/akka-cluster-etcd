@@ -173,4 +173,24 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       }
     }
   }
+
+  it should "create new unique keys and retrieve them in order" in {
+    whenReady(for {
+      _ <- etcd.createDir(baseKey + "dir3")
+      _ <- etcd.create(baseKey + "dir3", "1")
+      _ <- etcd.create(baseKey + "dir3", "2")
+      _ <- etcd.create(baseKey + "dir3", "3")
+      resp <- etcd.get(baseKey + "dir3", recursive = Some(true), sorted = Some(true))
+    } yield resp) { resp =>
+      inside(resp) {
+        case EtcdResponse("get", EtcdNode(_, _, _, _, Some(true), Some(nodes)), _) =>
+          val Key = s"/${baseKey}dir3/(\\d+)".r
+          val (keys, values) = (nodes collect {
+            case EtcdNode(Key(seq), _, _, Some(value), _, _) => (seq.toInt, value)             
+          }).unzip
+          keys shouldBe sorted
+          values should contain inOrderOnly ("1", "2", "3")
+      }
+    }
+  }
 }
