@@ -31,8 +31,6 @@ class EtcdClient(host: String, port: Int = 4001,
     httpClientSettings: Option[ClientConnectionSettings] = None,
     etcdOptions: Traversable[EtcdOption] = Nil)(implicit system: ActorSystem) {
 
-  private val keys = Path / "v2" / "keys"
-
   def get(key: String, recursive: Option[Boolean] = None, sorted: Option[Boolean] = None): Future[EtcdResponse] =
     run(GET, key, "recursive" -> recursive, "sorted" -> sorted)
 
@@ -80,28 +78,27 @@ class EtcdClient(host: String, port: Int = 4001,
   private def run(req: HttpRequest): Future[EtcdResponse] =
     Source.single(req).via(clientFlow).via(decodeFlow).runWith(Sink.head)
 
-  private def mkQuery(params: (String, Option[Any])*) = {
-    val present = params.map { case (k, ov) => ov.map(v => k -> v.toString()) }.
+  private def mkParams(params: Seq[(String, Option[Any])]) =
+    params.map { case (k, ov) => ov.map(v => k -> v.toString()) }.
       collect { case Some((k, v)) => (k, v) }
-    Query(present.toMap)
+
+  private def mkQuery(params: Seq[(String, Option[Any])]) = {
+    Query(mkParams(params).toMap)
   }
 
   private def enc(s: String) = URLEncoder.encode(s, "UTF-8")
 
-  private def mkEntity(params: (String, Option[Any])*) = {
-    val present = params.map { case (k, ov) => ov.map(v => k -> v.toString()) }.
-      collect { case Some((k, v)) => s"${enc(k)}=${enc(v)}" }
+  private def mkEntity(params: Seq[(String, Option[Any])]) = {
+    val present = mkParams(params).map { case (k, v) => s"${enc(k)}=${enc(v)}" }
     HttpEntity(ContentType(`application/x-www-form-urlencoded`), present.mkString("&"))
   }
 
   private val apiV2 = Path / "v2" / "keys"
 
   private def run(method: HttpMethod, key: String, params: (String, Option[Any])*): Future[EtcdResponse] =
-    run(method match {
-      case GET => HttpRequest(method, Uri(path = apiV2 / key, query = mkQuery(params: _*)))
-      case DELETE => HttpRequest(method, Uri(path = apiV2 / key, query = mkQuery(params: _*)))
-      case PUT => HttpRequest(method, Uri(path = apiV2 / key), entity = mkEntity(params: _*))
-      case POST => HttpRequest(method, Uri(path = apiV2 / key), entity = mkEntity(params: _*))
+    run(if (method == GET || method == DELETE) {
+      HttpRequest(method, Uri(path = apiV2 / key, query = mkQuery(params.toSeq)))
+    } else {
+      HttpRequest(method, Uri(path = apiV2 / key), entity = mkEntity(params.toSeq))
     })
-
 }
