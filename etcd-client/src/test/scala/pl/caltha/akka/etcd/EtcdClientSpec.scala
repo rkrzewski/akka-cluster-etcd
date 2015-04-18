@@ -197,11 +197,11 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
   }
 
   it should "wait for key updates" in {
-    whenReady(etcd.set("wait1", "1")) { resp1 =>
+    whenReady(etcd.set(baseKey + "wait1", "1")) { resp1 =>
       val index = resp1.node.modifiedIndex
-      etcd.set("wait1", "2")
+      etcd.set(baseKey + "wait1", "2")
       whenReady(for {
-        resp2 <- etcd.wait("wait1", waitIndex = Some(index + 1))
+        resp2 <- etcd.wait(baseKey + "wait1", waitIndex = Some(index + 1))
       } yield resp2) { resp2 =>
         resp2 should matchPattern {
           case EtcdResponse("set", EtcdNode(_, _, _, Some("2"), _, None), Some(EtcdNode(_, _, _, Some("1"), _, None))) =>
@@ -211,10 +211,10 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
   }
   
   it should "replay key updates that happened in the past" in {
-    whenReady(etcd.set("wait2", "1")) { resp1 =>
+    whenReady(etcd.set(baseKey + "wait2", "1")) { resp1 =>
       val index = resp1.node.modifiedIndex
       whenReady(for {
-        resp2 <- etcd.wait("wait2", waitIndex = Some(index))
+        resp2 <- etcd.wait(baseKey + "wait2", waitIndex = Some(index))
       } yield resp2) { resp2 =>
         resp2 should matchPattern {
           case EtcdResponse("set", EtcdNode(_, _, _, Some("1"), _, None), None) =>
