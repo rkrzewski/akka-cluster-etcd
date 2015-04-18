@@ -8,22 +8,17 @@ import scala.concurrent.Future
 import akka.actor.ActorSystem
 import akka.http.Http
 import akka.http.engine.client.ClientConnectionSettings
-import akka.http.model.ContentType
-import akka.http.model.HttpEntity
-import akka.http.model.HttpMethod
+import akka.http.model._
 import akka.http.model.HttpMethods._
-import akka.http.model.HttpRequest
-import akka.http.model.HttpResponse
 import akka.http.model.MediaTypes._
 import akka.http.model.Uri
 import akka.http.model.Uri._
 import akka.io.Inet.SocketOption
 import akka.stream.ActorFlowMaterializer
 import akka.stream.FlowMaterializer
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl._
 import akka.util.ByteString
+
 import spray.json.pimpString
 
 class EtcdClient(host: String, port: Int = 4001,
@@ -63,11 +58,13 @@ class EtcdClient(host: String, port: Int = 4001,
 
   private implicit val flowMaterializer: FlowMaterializer = ActorFlowMaterializer()
 
-  private val clientFlow =
+  private val client =
     Http(system).outgoingConnection(host, port, options = socketOptions, settings = httpClientSettings)
 
-  private val decodeFlow = Flow[HttpResponse].mapAsync { response =>
-    response.entity.dataBytes.runFold(ByteString.empty)((u, v) => u.concat(v)).
+  private val redirectHandlingClient = HttpRedirects(client)  
+    
+  private val decode = Flow[HttpResponse].mapAsync { response =>
+    response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).
       map(_.utf8String).map { body =>
         import EtcdJsonProtocol._
         if (response.status.isSuccess) body.parseJson.convertTo[EtcdResponse]
@@ -76,7 +73,7 @@ class EtcdClient(host: String, port: Int = 4001,
   }
 
   private def run(req: HttpRequest): Future[EtcdResponse] =
-    Source.single(req).via(clientFlow).via(decodeFlow).runWith(Sink.head)
+    Source.single(req).via(redirectHandlingClient).via(decode).runWith(Sink.head)
 
   private def mkParams(params: Seq[(String, Option[Any])]) =
     params.map { case (k, ov) => ov.map(v => k -> v.toString()) }.
