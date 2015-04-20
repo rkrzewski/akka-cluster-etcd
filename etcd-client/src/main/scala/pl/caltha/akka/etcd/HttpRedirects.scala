@@ -36,7 +36,7 @@ object HttpRedirects {
         val decider2 = b.add(EitherJunction[HttpResponse, HttpResponse, HttpResponse] {
           response =>
             if(redirectStatuses.contains(response.status.intValue()))
-              Left(HttpResponse(StatusCodes.TooManyRequests))
+              Left(HttpResponse(StatusCodes.custom(310, "Too many redirects")))
             else
               Right(response)
         })
