@@ -4,6 +4,7 @@ import scala.collection.immutable.Set
 
 import akka.http.model.HttpRequest
 import akka.http.model.HttpResponse
+import akka.http.model.StatusCodes
 import akka.http.model.headers.Location
 import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.Flow
@@ -24,7 +25,7 @@ object HttpRedirects {
         val bc = b.add(Broadcast[HttpRequest](2))
         val zip = b.add(Zip[HttpRequest, HttpResponse]())
         val originalClient = b.add(client)
-        val decider = b.add(EitherJunction[(HttpRequest, HttpResponse), HttpRequest, HttpResponse] {
+        val decider1 = b.add(EitherJunction[(HttpRequest, HttpResponse), HttpRequest, HttpResponse] {
           case (request, response) =>
             if (redirectStatuses.contains(response.status.intValue()) && response.header[Location].isDefined)
               Left(response.header[Location].map(location => request.withUri(location.uri)).get)
@@ -32,13 +33,22 @@ object HttpRedirects {
               Right(response)
         })
         val redirectClient = b.add(client)
-        val merge = b.add(Merge[HttpResponse](2))
+        val decider2 = b.add(EitherJunction[HttpResponse, HttpResponse, HttpResponse] {
+          response =>
+            if(redirectStatuses.contains(response.status.intValue()))
+              Left(HttpResponse(StatusCodes.TooManyRequests))
+            else
+              Right(response)
+        })
+        val merge = b.add(Merge[HttpResponse](3))
 
         bc ~> zip.in0
         bc ~> originalClient ~> zip.in1
-        zip.out ~> decider.in
-        decider.left ~> redirectClient ~> merge
-        decider.right ~> merge
+        zip.out ~> decider1.in
+        decider1.left ~> redirectClient ~> decider2.in
+        decider1.right ~> merge
+        decider2.left ~> merge
+        decider2.right ~> merge
 
         (bc.in, merge.out)
     }
