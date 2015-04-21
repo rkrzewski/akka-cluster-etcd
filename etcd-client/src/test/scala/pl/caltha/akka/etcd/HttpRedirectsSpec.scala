@@ -56,24 +56,24 @@ class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
   def request(serverFlow: Flow[HttpRequest, HttpResponse, Unit]): Future[HttpResponse] =
     Source.single(HttpRequest(GET).withUri("/0")).via(serverFlow).runWith(Sink.head)
 
-  "redirect-enabled client" should "handle direct response" in {
-    val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 0))
+  "redirect-enabled client" should "handle a direct response" in {
+    val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 0), 3)
     whenReady(request(flow)) {
       resp =>
         resp.status shouldBe StatusCodes.OK
     }
   }
 
-  it should "handle single redirect" in {
-    val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 1))
+  it should "handle appropriate number redirects" in {
+    val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 3), 3)
     whenReady(request(flow)) {
       resp =>
         resp.status shouldBe StatusCodes.OK
     }
   }
 
-  it should "report `Too many redirects` on double redirect" in {
-    val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 2))
+  it should "handle a suspected redirect loop with 310 status" in {
+    val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 4), 3)
     whenReady(request(flow)) {
       resp =>
         resp.status.intValue() shouldBe 310

@@ -61,7 +61,7 @@ class EtcdClient(host: String, port: Int = 4001,
   private val client =
     Http(system).outgoingConnection(host, port, options = socketOptions, settings = httpClientSettings)
 
-  private val redirectHandlingClient = HttpRedirects(client)  
+  private val redirectHandlingClient = HttpRedirects(client, 3)  
     
   private val decode = Flow[HttpResponse].mapAsync { response =>
     response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).
