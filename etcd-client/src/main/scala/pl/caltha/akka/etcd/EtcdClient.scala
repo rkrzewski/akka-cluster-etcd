@@ -19,7 +19,7 @@ import akka.stream.FlowMaterializer
 import akka.stream.scaladsl._
 import akka.util.ByteString
 
-import spray.json.pimpString
+import spray.json._
 
 class EtcdClient(host: String, port: Int = 4001,
     socketOptions: Traversable[SocketOption] = Nil,
@@ -54,6 +54,33 @@ class EtcdClient(host: String, port: Int = 4001,
   def compareAndDelete(key: String, prevValue: Option[String] = None, prevIndex: Option[Int] = None): Future[EtcdResponse] =
     run(DELETE, key, "prevValue" -> prevValue, "prevIndex" -> prevIndex)
 
+  def watch(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None,
+    quorum: Option[Boolean] = None): Source[EtcdResponse, Unit] = {
+    case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Option[Boolean],
+      quorum: Option[Boolean])
+    val init = WatchRequest(key, waitIndex, recursive, quorum)
+    Source[EtcdResponse]() { implicit b =>
+      import FlowGraph.Implicits._
+
+      val initReq = b.add(Source.single(init))
+      val reqMerge = b.add(Merge[WatchRequest](2))
+      val runWait = b.add(Flow[WatchRequest].mapAsync { req =>
+        this.wait(req.key, req.waitIndex, req.recursive, req.quorum).map { resp =>
+          (req.copy(waitIndex = Some(resp.node.modifiedIndex + 1)), resp)
+        }
+      })
+      val respUnzip = b.add(Unzip[WatchRequest, EtcdResponse]())
+
+      initReq ~> reqMerge.in(0)
+      reqMerge ~> runWait
+      runWait ~> respUnzip.in
+      respUnzip.out0 ~> reqMerge.in(1)
+      respUnzip.out1
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------  
+
   private implicit val executionContext = system.dispatcher
 
   private implicit val flowMaterializer: FlowMaterializer = ActorFlowMaterializer()
@@ -61,8 +88,8 @@ class EtcdClient(host: String, port: Int = 4001,
   private val client =
     Http(system).outgoingConnection(host, port, options = socketOptions, settings = httpClientSettings)
 
-  private val redirectHandlingClient = HttpRedirects(client, 3)  
-    
+  private val redirectHandlingClient = HttpRedirects(client, 3)
+
   private val decode = Flow[HttpResponse].mapAsync { response =>
     response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).
       map(_.utf8String).map { body =>

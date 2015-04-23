@@ -8,12 +8,15 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time._
 
 import akka.actor.ActorSystem
+import akka.stream.ActorFlowMaterializer
 
 class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
 
   implicit val system = ActorSystem()
 
   implicit val exCtx = system.dispatcher
+
+  implicit val mat = ActorFlowMaterializer()
 
   val etcd = new EtcdClient("localhost")
 
@@ -209,7 +212,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       }
     }
   }
-  
+
   it should "replay key updates that happened in the past" in {
     whenReady(etcd.set(baseKey + "wait2", "1")) { resp1 =>
       val index = resp1.node.modifiedIndex
@@ -219,6 +222,23 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
         resp2 should matchPattern {
           case EtcdResponse("set", EtcdNode(_, _, _, Some("1"), _, None), None) =>
         }
+      }
+    }
+  }
+
+  it should "provide a stream of updates to a key" in {
+    whenReady(for {
+      _ <- etcd.createDir(baseKey + "watch1")
+      resp <- etcd.create(baseKey + "watch1", "1")
+      _ <- etcd.create(baseKey + "watch1", "2")
+      _ <- etcd.create(baseKey + "watch1", "3")
+      _ <- etcd.get(baseKey + "watch1", recursive = Some(true), sorted = Some(true))
+    } yield resp) { resp =>
+      val createdIndex = resp.node.createdIndex
+      whenReady(etcd.watch(baseKey + "watch1", Some(createdIndex), Some(true)).take(3).runFold(Seq[EtcdResponse]()) {
+        case (resps, r) => r +: resps
+      }) { resps =>
+        resps.map(_.node.value.get).reverse should contain inOrderOnly ("1", "2", "3")
       }
     }
   }
