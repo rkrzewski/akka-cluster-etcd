@@ -1,10 +1,10 @@
 package pl.caltha.akka.etcd
 
 import scala.collection.immutable.Set
-import akka.http.model.HttpRequest
-import akka.http.model.HttpResponse
-import akka.http.model.StatusCodes
-import akka.http.model.headers.Location
+import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers.Location
 import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.FlowGraph

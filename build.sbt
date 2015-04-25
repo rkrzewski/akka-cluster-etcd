@@ -8,8 +8,8 @@ lazy val client = project.
     settings(commonSettings).
     settings(Seq(
         libraryDependencies ++= Seq(
-            "com.typesafe.akka" %% "akka-http-experimental" % "1.0-M5",
-            "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-M5",
+            "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC1",
+            "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-RC1",
             "org.scalatest" %% "scalatest" % "2.2.1" % "test"
         )
     ))
@@ -20,6 +20,6 @@ lazy val discovery = project.
     settings(commonSettings).
     settings(Seq(
         libraryDependencies ++= Seq(
-            "com.typesafe.akka" %% "akka-actor" % "2.3.9"
+            "com.typesafe.akka" %% "akka-actor" % "2.3.10"
         )
     ))

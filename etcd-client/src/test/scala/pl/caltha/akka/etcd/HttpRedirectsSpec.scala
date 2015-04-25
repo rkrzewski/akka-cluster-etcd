@@ -8,15 +8,15 @@ import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 
 import akka.actor.ActorSystem
-import akka.http.marshalling._
-import akka.http.model.HttpMethods.GET
-import akka.http.model.HttpRequest
-import akka.http.model.HttpResponse
-import akka.http.model.StatusCodes
-import akka.http.model.headers.Location
-import akka.http.server.Directives._
-import akka.http.server.Route
-import akka.http.server.RoutingSettings
+import akka.http.scaladsl.marshalling._
+import akka.http.scaladsl.model.HttpMethods.GET
+import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers.Location
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.RoutingSettings
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink

@@ -3,14 +3,11 @@ package pl.caltha.akka.etcd
 import scala.collection.immutable.Seq
 
 import akka.stream.Inlet
+import akka.stream.OperationAttributes
 import akka.stream.Outlet
 import akka.stream.Shape
-import akka.stream.Graph
-import akka.stream.scaladsl.OperationAttributes
 import akka.stream.scaladsl.FlexiRoute
-import akka.stream.scaladsl.FlexiRoute.RouteLogic
-import akka.stream.scaladsl.FlexiRoute.DemandFromAll
-import akka.stream.javadsl.FlexiRoute.State
+import akka.stream.scaladsl.FlexiRoute._
 
 object EitherJunctionShape {
   sealed trait Init[I, L, R]

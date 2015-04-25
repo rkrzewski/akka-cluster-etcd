@@ -3,16 +3,17 @@ package pl.caltha.akka.etcd
 import java.net.URLEncoder
 
 import scala.collection.immutable.Traversable
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.actor.ActorSystem
-import akka.http.Http
-import akka.http.engine.client.ClientConnectionSettings
-import akka.http.model._
-import akka.http.model.HttpMethods._
-import akka.http.model.MediaTypes._
-import akka.http.model.Uri
-import akka.http.model.Uri._
+import akka.http.ClientConnectionSettings
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.model.MediaTypes._
+import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.model.Uri._
 import akka.io.Inet.SocketOption
 import akka.stream.ActorFlowMaterializer
 import akka.stream.FlowMaterializer
@@ -55,7 +56,7 @@ class EtcdClient(host: String, port: Int = 4001,
     run(DELETE, key, "prevValue" -> prevValue, "prevIndex" -> prevIndex)
 
   def watch(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None,
-    quorum: Option[Boolean] = None): Source[EtcdResponse, Unit] = {
+    quorum: Option[Boolean] = None)(implicit executionContext: ExecutionContext): Source[EtcdResponse, Unit] = {
     case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Option[Boolean],
       quorum: Option[Boolean])
     val init = WatchRequest(key, waitIndex, recursive, quorum)
@@ -64,11 +65,11 @@ class EtcdClient(host: String, port: Int = 4001,
 
       val initReq = b.add(Source.single(init))
       val reqMerge = b.add(Merge[WatchRequest](2))
-      val runWait = b.add(Flow[WatchRequest].mapAsync { req =>
+      val runWait = b.add(Flow[WatchRequest].mapAsync(1, req => {
         this.wait(req.key, req.waitIndex, req.recursive, req.quorum).map { resp =>
           (req.copy(waitIndex = Some(resp.node.modifiedIndex + 1)), resp)
         }
-      })
+      }))
       val respUnzip = b.add(Unzip[WatchRequest, EtcdResponse]())
 
       initReq ~> reqMerge.in(0)
@@ -86,18 +87,18 @@ class EtcdClient(host: String, port: Int = 4001,
   private implicit val flowMaterializer: FlowMaterializer = ActorFlowMaterializer()
 
   private val client =
-    Http(system).outgoingConnection(host, port, options = socketOptions, settings = httpClientSettings)
+    Http(system).outgoingConnection(host, port, options = socketOptions, settings = httpClientSettings.getOrElse(ClientConnectionSettings(system)))
 
   private val redirectHandlingClient = HttpRedirects(client, 3)
 
-  private val decode = Flow[HttpResponse].mapAsync { response =>
+  private val decode = Flow[HttpResponse].mapAsync(1, response => {
     response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).
       map(_.utf8String).map { body =>
         import EtcdJsonProtocol._
         if (response.status.isSuccess) body.parseJson.convertTo[EtcdResponse]
         else throw EtcdException(body.parseJson.convertTo[EtcdError])
       }
-  }
+  })
 
   private def run(req: HttpRequest): Future[EtcdResponse] =
     Source.single(req).via(redirectHandlingClient).via(decode).runWith(Sink.head)
