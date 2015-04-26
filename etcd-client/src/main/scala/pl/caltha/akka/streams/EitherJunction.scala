@@ -1,7 +1,6 @@
-package pl.caltha.akka.etcd
+package pl.caltha.akka.streams
 
 import scala.collection.immutable.Seq
-
 import akka.stream.Inlet
 import akka.stream.OperationAttributes
 import akka.stream.Outlet
@@ -9,13 +8,13 @@ import akka.stream.Shape
 import akka.stream.scaladsl.FlexiRoute
 import akka.stream.scaladsl.FlexiRoute._
 
+import EitherJunctionShape._
+
 object EitherJunctionShape {
   sealed trait Init[I, L, R]
   case class Name[I, L, R](name: String) extends Init[I, L, R]
   case class Ports[I, L, R](in: Inlet[I], left: Outlet[L], right: Outlet[R]) extends Init[I, L, R]
 }
-
-import EitherJunctionShape._
 
 class EitherJunctionShape[I, L, R](init: EitherJunctionShape.Init[I, L, R] = Name[I, L, R]("EitherJunction")) extends Shape {
   private val (_in, _left, _right) = init match {

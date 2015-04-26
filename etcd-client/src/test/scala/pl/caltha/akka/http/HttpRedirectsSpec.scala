@@ -1,11 +1,6 @@
-package pl.caltha.akka.etcd
+package pl.caltha.akka.http
 
 import scala.concurrent.Future
-
-import org.scalatest.Finders
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import org.scalatest.concurrent.ScalaFutures
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling._
@@ -13,6 +8,7 @@ import akka.http.scaladsl.model.HttpMethods.GET
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers.Location
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -21,6 +17,11 @@ import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import akka.http.scaladsl.marshalling.ToResponseMarshallable.apply
+
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers
+import org.scalatest.concurrent.ScalaFutures
 
 class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
 

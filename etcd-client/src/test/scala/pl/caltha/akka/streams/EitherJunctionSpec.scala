@@ -1,13 +1,10 @@
-package pl.caltha.akka.etcd
+package pl.caltha.akka.streams
 
 import scala.Left
 import scala.Right
-
-import org.scalatest.Finders
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
-
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.FlowMaterializer

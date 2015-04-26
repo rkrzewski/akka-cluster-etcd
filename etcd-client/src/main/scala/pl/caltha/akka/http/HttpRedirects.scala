@@ -1,6 +1,7 @@
-package pl.caltha.akka.etcd
+package pl.caltha.akka.http
 
 import scala.collection.immutable.Set
+
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
@@ -11,7 +12,8 @@ import akka.stream.scaladsl.FlowGraph
 import akka.stream.scaladsl.Merge
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Zip
-import akka.stream.scaladsl.Unzip
+
+import pl.caltha.akka.streams.EitherJunction
 
 /**
  * HTTP redirects support for Akka HTTP Client

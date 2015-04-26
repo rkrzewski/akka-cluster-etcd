@@ -22,6 +22,8 @@ import akka.util.ByteString
 
 import spray.json._
 
+import pl.caltha.akka.http.HttpRedirects
+
 class EtcdClient(host: String, port: Int = 4001,
     socketOptions: Traversable[SocketOption] = Nil,
     httpClientSettings: Option[ClientConnectionSettings] = None)(implicit system: ActorSystem) {
