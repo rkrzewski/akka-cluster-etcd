@@ -41,7 +41,7 @@ object HttpRedirects {
    *        redirects` response.
    * @param redirectStatuses HTTP status codes that will be recognized as redirects. The response must contain
    *        `Location` header, otherwise the response will be passed as-is to the client.
-   * @returns augmented request to response flow.
+   * @return augmented request to response flow.
    */
   def apply(httpFlow: Flow[HttpRequest, HttpResponse, _], maxRedirects: Int, redirectStatuses: Set[Int] = Set(301, 302, 307)): Flow[HttpRequest, HttpResponse, Unit] =
     Flow[HttpRequest, HttpResponse]() { implicit b =>
