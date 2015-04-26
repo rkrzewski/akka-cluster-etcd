@@ -17,26 +17,26 @@ import pl.caltha.akka.streams.EitherJunction
 
 /**
  * HTTP redirects support for Akka HTTP Client
+ * {{{
+ *                                                                 +----------------+
+ *                          +--------------------------------------|redirectJunction|--->>>
+ *                          |                                      +----------------+
+ *                          |                                               ^
+ *                          |                                               |
+ *       +----------+       |                                         +----------+
+ *       |origReqNum|       |                +----------------------->|reqRespZip|
+ *       +----------+       |                |                        +----------+
+ *            |             |                |                              ^
+ *            v             v                |                              |
+ *       +----------+   +--------+   +---------------+   +----------+   +--------+
+ * >>>---|origReqZip|-->|reqMerge|-->|reqNumBroadcast|-->|extractReq|-->|  http  |
+ *       +----------+   +--------+   +---------------+   +----------+   +--------+
+ * }}}
  */
 object HttpRedirects {
   /**
    * Augments client flow with the capability to follow HTTP redirects up to a specified depth.
-   *
-   * {{{
-   *                                                                 +----------------+
-   *                          +--------------------------------------|redirectJunction|--->>>
-   *                          |                                      +----------------+
-   *                          |                                               ^
-   *                          |                                               |
-   *       +----------+       |                                         +----------+
-   *       |origReqNum|       |                +----------------------->|reqRespZip|
-   *       +----------+       |                |                        +----------+
-   *            |             |                |                              ^
-   *            v             v                |                              |
-   *       +----------+   +--------+   +---------------+   +----------+   +--------+
-   * >>>---|origReqZip|-->|reqMerge|-->|reqNumBroadcast|-->|extractReq|-->|  http  |
-   *       +----------+   +--------+   +---------------+   +----------+   +--------+
-   * }}}
+   * 
    * @param httpFlow the request to response flow that will be used to contact the server.
    * @param maxRedirects maximum number of redirects that will be accepted. When server returns a
    *        redirect code for the final request, processing will be terminated with `310 Too many
