@@ -3,14 +3,18 @@ lazy val commonSettings = Seq(
     scalaVersion := "2.11.6"
 )
 
+val akkaVersion = "2.3.10"
+val akkaStreamsVersion = "1.0-RC1"
+val scalaTestVersion = "2.2.1"
+
 lazy val client = project. 
     in(file("etcd-client")). 
     settings(commonSettings).
     settings(Seq(
         libraryDependencies ++= Seq(
-            "com.typesafe.akka" %% "akka-http-scala-experimental" % "1.0-RC1",
-            "com.typesafe.akka" %% "akka-http-spray-json-experimental" % "1.0-RC1",
-            "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+            "com.typesafe.akka" %% "akka-http-scala-experimental" % akkaStreamsVersion,
+            "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamsVersion,
+            "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
         )
     ))
 
@@ -20,6 +24,6 @@ lazy val discovery = project.
     settings(commonSettings).
     settings(Seq(
         libraryDependencies ++= Seq(
-            "com.typesafe.akka" %% "akka-actor" % "2.3.10"
+            "com.typesafe.akka" %% "akka-actor" % akkaVersion
         )
     ))
