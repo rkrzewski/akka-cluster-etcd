@@ -24,6 +24,7 @@ lazy val discovery = project.
     settings(commonSettings).
     settings(Seq(
         libraryDependencies ++= Seq(
-            "com.typesafe.akka" %% "akka-actor" % akkaVersion
+            "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+            "com.typesafe.akka" %% "akka-cluster" % akkaVersion
         )
     ))
