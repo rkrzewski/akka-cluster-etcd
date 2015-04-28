@@ -31,26 +31,28 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     socketOptions: Traversable[SocketOption] = Nil,
     httpClientSettings: Option[ClientConnectionSettings] = None)(implicit system: ActorSystem) extends EtcdClient {
 
-  def bool(name: String, value: Boolean): Option[(String, String)] =
-    if (value) Some(name -> value.toString)
-    else None
+  private def bool(name: String, value: Boolean): Option[(String, String)] =
+    if (value) Some(name -> value.toString) else None
+
+  private def opt[T](name: String, option: Option[T]): Option[(String, String)] =
+    option map { case value => name -> value.toString }
 
   def get(key: String, recursive: Boolean, sorted: Boolean): Future[EtcdResponse] =
     run(GET, key, bool("recursive", recursive), bool("sorted", sorted))
 
   def wait(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
     sorted: Boolean, quorum: Boolean): Future[EtcdResponse] =
-    run(GET, key, Some("wait" -> "true"), waitIndex.map("waitIndex" -> _.toString),
+    run(GET, key, Some("wait" -> "true"), opt("waitIndex", waitIndex),
       bool("recursive", recursive), bool("sorted", sorted), bool("quorum", quorum))
 
   def set(key: String, value: String, ttl: Option[Int] = None): Future[EtcdResponse] =
-    run(PUT, key, Some("value" -> value), ttl.map("ttl" -> _.toString))
+    run(PUT, key, Some("value" -> value), opt("ttl", ttl))
 
   def compareAndSet(key: String, value: String, ttl: Option[Int] = None, prevValue: Option[String] = None,
     prevIndex: Option[Int] = None, prevExist: Option[Boolean] = None): Future[EtcdResponse] =
-    run(PUT, key, Some("value" -> value), ttl.map("ttl" -> _.toString), prevValue.map("prevValue" -> _),
-      prevIndex.map("prevIndex" -> _.toString), prevExist.map("prevExist" -> _.toString))
-      
+    run(PUT, key, Some("value" -> value), opt("ttl", ttl), opt("prevValue", prevValue),
+      opt("prevIndex", prevIndex), opt("prevExist", prevExist))
+
   def clearTTL(key: String): Future[EtcdResponse] =
     run(PUT, key, Some("ttl" -> ""), Some("prevExists" -> "true"))
 
@@ -58,13 +60,13 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     run(POST, parentKey, Some("value" -> value))
 
   def createDir(key: String, ttl: Option[Int] = None): Future[EtcdResponse] =
-    run(PUT, key, Some("dir" -> "true"), ttl.map("ttl" -> _.toString))
+    run(PUT, key, Some("dir" -> "true"), opt("ttl", ttl))
 
   def delete(key: String, recursive: Boolean = false): Future[EtcdResponse] =
     run(DELETE, key, bool("recursive", recursive))
 
   def compareAndDelete(key: String, prevValue: Option[String] = None, prevIndex: Option[Int] = None): Future[EtcdResponse] =
-    run(DELETE, key, prevValue.map("prevValue" -> _), prevIndex.map("prevIndex" -> _.toString))
+    run(DELETE, key, opt("prevValue", prevValue), opt("prevIndex", prevIndex))
 
   def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
     quorum: Boolean): Source[EtcdResponse, Unit] = {
@@ -75,7 +77,7 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
 
       val initReq = b.add(Source.single(init))
       val reqMerge = b.add(Merge[WatchRequest](2))
-      val runWait = b.add(Flow[WatchRequest].mapAsync(1, req => {
+      val runWait = b.add(Flow[WatchRequest].mapAsync(1)(req => {
         this.wait(req.key, req.waitIndex, req.recursive, req.quorum).map { resp =>
           (req.copy(waitIndex = Some(resp.node.modifiedIndex + 1)), resp)
         }
@@ -101,7 +103,7 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
 
   private val redirectHandlingClient = HttpRedirects(client, 3)
 
-  private val decode = Flow[HttpResponse].mapAsync(1, response => {
+  private val decode = Flow[HttpResponse].mapAsync(1)(response => {
     response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).
       map(_.utf8String).map { body =>
         import EtcdJsonProtocol._
