@@ -65,7 +65,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       _ <- etcd.set(baseKey + "dir/one", "1")
       _ <- etcd.set(baseKey + "dir/two", "2")
       _ <- etcd.set(baseKey + "dir/three", "3")
-      resp <- etcd.get(baseKey + "dir", recursive = Some(true))
+      resp <- etcd.get(baseKey + "dir", recursive = true)
     } yield resp) { resp =>
       inside(resp) {
         case EtcdResponse("get", EtcdNode(_, _, _, _, Some(true), Some(nodes)), _) =>
@@ -83,7 +83,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       _ <- etcd.set(baseKey + "dir2/two", "2")
       _ <- etcd.set(baseKey + "dir2/three", "3")
       _ <- etcd.delete(baseKey + "dir2", recursive = true)
-      resp <- etcd.get(baseKey + "dir2", recursive = Some(true)).error
+      resp <- etcd.get(baseKey + "dir2", recursive = true).error
     } yield resp) { resp =>
       resp should matchPattern {
         case EtcdError(100, _, _, _) =>
@@ -185,7 +185,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       _ <- etcd.create(baseKey + "dir3", "1")
       _ <- etcd.create(baseKey + "dir3", "2")
       _ <- etcd.create(baseKey + "dir3", "3")
-      resp <- etcd.get(baseKey + "dir3", recursive = Some(true), sorted = Some(true))
+      resp <- etcd.get(baseKey + "dir3", recursive = true, sorted = true)
     } yield resp) { resp =>
       inside(resp) {
         case EtcdResponse("get", EtcdNode(_, _, _, _, Some(true), Some(nodes)), _) =>
@@ -232,10 +232,10 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       resp <- etcd.create(baseKey + "watch1", "1")
       _ <- etcd.create(baseKey + "watch1", "2")
       _ <- etcd.create(baseKey + "watch1", "3")
-      _ <- etcd.get(baseKey + "watch1", recursive = Some(true), sorted = Some(true))
+      _ <- etcd.get(baseKey + "watch1", recursive = true, sorted = true)
     } yield resp) { resp =>
       val createdIndex = resp.node.createdIndex
-      whenReady(etcd.watch(baseKey + "watch1", Some(createdIndex), Some(true)).take(3).runFold(Seq[EtcdResponse]()) {
+      whenReady(etcd.watch(baseKey + "watch1", Some(createdIndex), true).take(3).runFold(Seq[EtcdResponse]()) {
         case (resps, r) => r +: resps
       }) { resps =>
         resps.map(_.node.value.get).reverse should contain inOrderOnly ("1", "2", "3")

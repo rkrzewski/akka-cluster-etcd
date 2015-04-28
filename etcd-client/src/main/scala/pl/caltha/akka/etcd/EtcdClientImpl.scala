@@ -31,39 +31,41 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     socketOptions: Traversable[SocketOption] = Nil,
     httpClientSettings: Option[ClientConnectionSettings] = None)(implicit system: ActorSystem) extends EtcdClient {
 
-  def get(key: String, recursive: Option[Boolean] = None, sorted: Option[Boolean] = None): Future[EtcdResponse] =
-    run(GET, key, "recursive" -> recursive, "sorted" -> sorted)
+  def bool(name: String, value: Boolean): Option[(String, String)] =
+    if (value) Some(name -> value.toString)
+    else None
 
-  def wait(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None,
-    sorted: Option[Boolean] = None, quorum: Option[Boolean] = None): Future[EtcdResponse] =
-    run(GET, key, "wait" -> Some(true), "waitIndex" -> waitIndex,
-      "recursive" -> recursive, "sorted" -> sorted, "quorum" -> quorum)
+  def get(key: String, recursive: Boolean, sorted: Boolean): Future[EtcdResponse] =
+    run(GET, key, bool("recursive", recursive), bool("sorted", sorted))
+
+  def wait(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
+    sorted: Boolean, quorum: Boolean): Future[EtcdResponse] =
+    run(GET, key, Some("wait" -> "true"), waitIndex.map("waitIndex" -> _.toString),
+      bool("recursive", recursive), bool("sorted", sorted), bool("quorum", quorum))
 
   def set(key: String, value: String, ttl: Option[Int] = None): Future[EtcdResponse] =
-    run(PUT, key, "value" -> Some(value), "ttl" -> ttl)
+    run(PUT, key, Some("value" -> value), ttl.map("ttl" -> _.toString))
 
-  def compareAndSet(key: String, value: String, ttl: Option[Int] = None,
-    prevValue: Option[String] = None, prevIndex: Option[Int] = None,
-    prevExist: Option[Boolean] = None): Future[EtcdResponse] =
-    run(PUT, key, "value" -> Some(value), "ttl" -> ttl,
-      "prevValue" -> prevValue, "prevIndex" -> prevIndex, "prevExist" -> prevExist)
+  def compareAndSet(key: String, value: String, ttl: Option[Int] = None, prevValue: Option[String] = None,
+    prevIndex: Option[Int] = None, prevExist: Option[Boolean] = None): Future[EtcdResponse] =
+    run(PUT, key, Some("value" -> value), ttl.map("ttl" -> _.toString), prevValue.map("prevValue" -> _),
+      prevIndex.map("prevIndex" -> _.toString), prevExist.map("prevExist" -> _.toString))
 
   def create(parentKey: String, value: String): Future[EtcdResponse] =
-    run(POST, parentKey, "value" -> Some(value))
+    run(POST, parentKey, Some("value" -> value))
 
   def createDir(key: String, ttl: Option[Int] = None): Future[EtcdResponse] =
-    run(PUT, key, "dir" -> Some(true), "ttl" -> ttl)
+    run(PUT, key, Some("dir" -> "true"), ttl.map("ttl" -> _.toString))
 
   def delete(key: String, recursive: Boolean = false): Future[EtcdResponse] =
-    run(DELETE, key, "recursive" -> Some(recursive))
+    run(DELETE, key, bool("recursive", recursive))
 
   def compareAndDelete(key: String, prevValue: Option[String] = None, prevIndex: Option[Int] = None): Future[EtcdResponse] =
-    run(DELETE, key, "prevValue" -> prevValue, "prevIndex" -> prevIndex)
+    run(DELETE, key, prevValue.map("prevValue" -> _), prevIndex.map("prevIndex" -> _.toString))
 
-  def watch(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None,
-    quorum: Option[Boolean] = None)(implicit executionContext: ExecutionContext): Source[EtcdResponse, Unit] = {
-    case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Option[Boolean],
-      quorum: Option[Boolean])
+  def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
+    quorum: Boolean)(implicit executionContext: ExecutionContext): Source[EtcdResponse, Unit] = {
+    case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Boolean, quorum: Boolean)
     val init = WatchRequest(key, waitIndex, recursive, quorum)
     Source[EtcdResponse]() { implicit b =>
       import FlowGraph.Implicits._
@@ -108,24 +110,23 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
   private def run(req: HttpRequest): Future[EtcdResponse] =
     Source.single(req).via(redirectHandlingClient).via(decode).runWith(Sink.head)
 
-  private def mkParams(params: Seq[(String, Option[Any])]) =
-    params.map { case (k, ov) => ov.map(v => k -> v.toString()) }.
-      collect { case Some((k, v)) => (k, v) }
+  private def mkParams(params: Seq[Option[(String, String)]]) =
+    params.collect { case Some((k, v)) => (k, v) }
 
-  private def mkQuery(params: Seq[(String, Option[Any])]) = {
+  private def mkQuery(params: Seq[Option[(String, String)]]) = {
     Query(mkParams(params).toMap)
   }
 
   private def enc(s: String) = URLEncoder.encode(s, "UTF-8")
 
-  private def mkEntity(params: Seq[(String, Option[Any])]) = {
+  private def mkEntity(params: Seq[Option[(String, String)]]) = {
     val present = mkParams(params).map { case (k, v) => s"${enc(k)}=${enc(v)}" }
     HttpEntity(ContentType(`application/x-www-form-urlencoded`), present.mkString("&"))
   }
 
   private val apiV2 = Path / "v2" / "keys"
 
-  private def run(method: HttpMethod, key: String, params: (String, Option[Any])*): Future[EtcdResponse] =
+  private def run(method: HttpMethod, key: String, params: Option[(String, String)]*): Future[EtcdResponse] =
     run(if (method == GET || method == DELETE) {
       HttpRequest(method, Uri(path = apiV2 / key, query = mkQuery(params.toSeq)))
     } else {

@@ -14,10 +14,10 @@ import akka.stream.scaladsl.Source
  */
 trait EtcdClient {
 
-  def get(key: String, recursive: Option[Boolean] = None, sorted: Option[Boolean] = None): Future[EtcdResponse]
+  def get(key: String, recursive: Boolean = false, sorted: Boolean = false): Future[EtcdResponse]
 
-  def wait(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None,
-    sorted: Option[Boolean] = None, quorum: Option[Boolean] = None): Future[EtcdResponse]
+  def wait(key: String, waitIndex: Option[Int] = None, recursive: Boolean = false,
+    sorted: Boolean = false, quorum: Boolean = false): Future[EtcdResponse]
 
   def set(key: String, value: String, ttl: Option[Int] = None): Future[EtcdResponse]
 
@@ -33,8 +33,8 @@ trait EtcdClient {
 
   def compareAndDelete(key: String, prevValue: Option[String] = None, prevIndex: Option[Int] = None): Future[EtcdResponse]
 
-  def watch(key: String, waitIndex: Option[Int] = None, recursive: Option[Boolean] = None,
-    quorum: Option[Boolean] = None)(implicit executionContext: ExecutionContext): Source[EtcdResponse, Unit]
+  def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean = false,
+    quorum: Boolean = false)(implicit executionContext: ExecutionContext): Source[EtcdResponse, Unit]
 
 }
 
