@@ -13,7 +13,7 @@ class ClusterDiscoveryImpl(extendedSystem: ExtendedActorSystem) extends Extensio
   val etcdPort = system.settings.config.getInt("akka.cluster.discovery.etcd.port")
   val etcdPath = system.settings.config.getString("akka.cluster.discovery.etcd.path")
   
-  private val etcd = new EtcdClient(etcdHost, etcdPort)
+  private val etcd = EtcdClient(etcdHost, etcdPort)
   
   private val cluster = Cluster(system)
   

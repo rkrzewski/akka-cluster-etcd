@@ -18,7 +18,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
 
   implicit val mat = ActorFlowMaterializer()
 
-  val etcd = new EtcdClient("localhost")
+  val etcd = EtcdClient("localhost")
 
   implicit val defaultPatience =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(100, Millis))
