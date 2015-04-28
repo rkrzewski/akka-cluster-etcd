@@ -34,7 +34,7 @@ trait EtcdClient {
   def compareAndDelete(key: String, prevValue: Option[String] = None, prevIndex: Option[Int] = None): Future[EtcdResponse]
 
   def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean = false,
-    quorum: Boolean = false)(implicit executionContext: ExecutionContext): Source[EtcdResponse, Unit]
+    quorum: Boolean = false): Source[EtcdResponse, Unit]
 
 }
 

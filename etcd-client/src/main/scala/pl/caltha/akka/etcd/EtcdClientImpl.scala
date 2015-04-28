@@ -64,7 +64,7 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     run(DELETE, key, prevValue.map("prevValue" -> _), prevIndex.map("prevIndex" -> _.toString))
 
   def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
-    quorum: Boolean)(implicit executionContext: ExecutionContext): Source[EtcdResponse, Unit] = {
+    quorum: Boolean): Source[EtcdResponse, Unit] = {
     case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Boolean, quorum: Boolean)
     val init = WatchRequest(key, waitIndex, recursive, quorum)
     Source[EtcdResponse]() { implicit b =>
