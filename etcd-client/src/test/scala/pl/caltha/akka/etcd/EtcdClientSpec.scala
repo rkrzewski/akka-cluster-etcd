@@ -37,7 +37,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       resp <- etcd.get(baseKey + "one")
     } yield resp) { resp =>
       resp should matchPattern {
-        case EtcdResponse("get", EtcdNode(_, _, _, Some("1"), _, None), _) =>
+        case EtcdResponse("get", EtcdNode(_, _, _, _, Some("1"), _, None), _) =>
       }
     }
   }
@@ -68,9 +68,9 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       resp <- etcd.get(baseKey + "dir", recursive = true)
     } yield resp) { resp =>
       inside(resp) {
-        case EtcdResponse("get", EtcdNode(_, _, _, _, Some(true), Some(nodes)), _) =>
+        case EtcdResponse("get", EtcdNode(_, _, _, _, _, Some(true), Some(nodes)), _) =>
           nodes collect {
-            case EtcdNode(_, _, _, Some(value), _, _) => value
+            case EtcdNode(_, _, _, _, Some(value), _, _) => value
           } should contain allOf ("1", "2", "3")
       }
     }
@@ -125,7 +125,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
   it should "set keys conditionally, wrt. key's last write index" in {
     whenReady(etcd.set(baseKey + "atom3", "1")) { resp1 =>
       inside(resp1) {
-        case EtcdResponse("set", EtcdNode(_, createdIndex, _, Some("1"), _, None), _) =>
+        case EtcdResponse("set", EtcdNode(_, createdIndex, _, _, Some("1"), _, None), _) =>
 
           whenReady(etcd.compareAndSet(baseKey + "atom3", "2", prevIndex = Some(createdIndex))) { resp2 =>
             resp2 should matchPattern {
@@ -162,7 +162,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
   it should "delete keys conditionally, wrt. key's last write index" in {
     whenReady(etcd.set(baseKey + "atom5", "1")) { resp1 =>
       inside(resp1) {
-        case EtcdResponse("set", EtcdNode(_, createdIndex, _, Some("1"), _, None), _) =>
+        case EtcdResponse("set", EtcdNode(_, createdIndex, _, _, Some("1"), _, None), _) =>
 
           whenReady(etcd.compareAndDelete(baseKey + "atom5", prevIndex = Some(createdIndex - 1)).error) { resp2 =>
             resp2 should matchPattern {
@@ -188,10 +188,10 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       resp <- etcd.get(baseKey + "dir3", recursive = true, sorted = true)
     } yield resp) { resp =>
       inside(resp) {
-        case EtcdResponse("get", EtcdNode(_, _, _, _, Some(true), Some(nodes)), _) =>
+        case EtcdResponse("get", EtcdNode(_, _, _, _, _, Some(true), Some(nodes)), _) =>
           val Key = s"/${baseKey}dir3/(\\d+)".r
           val (keys, values) = (nodes collect {
-            case EtcdNode(Key(seq), _, _, Some(value), _, _) => (seq.toInt, value)
+            case EtcdNode(Key(seq), _, _, _, Some(value), _, _) => (seq.toInt, value)
           }).unzip
           keys shouldBe sorted
           values should contain inOrderOnly ("1", "2", "3")
@@ -207,7 +207,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
         resp2 <- etcd.wait(baseKey + "wait1", waitIndex = Some(index + 1))
       } yield resp2) { resp2 =>
         resp2 should matchPattern {
-          case EtcdResponse("set", EtcdNode(_, _, _, Some("2"), _, None), Some(EtcdNode(_, _, _, Some("1"), _, None))) =>
+          case EtcdResponse("set", EtcdNode(_, _, _, _, Some("2"), _, None), Some(EtcdNode(_, _, _, _, Some("1"), _, None))) =>
         }
       }
     }
@@ -220,7 +220,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
         resp2 <- etcd.wait(baseKey + "wait2", waitIndex = Some(index))
       } yield resp2) { resp2 =>
         resp2 should matchPattern {
-          case EtcdResponse("set", EtcdNode(_, _, _, Some("1"), _, None), None) =>
+          case EtcdResponse("set", EtcdNode(_, _, _, _, Some("1"), _, None), None) =>
         }
       }
     }
