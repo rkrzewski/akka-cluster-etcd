@@ -24,6 +24,8 @@ trait EtcdClient {
   def compareAndSet(key: String, value: String, ttl: Option[Int] = None,
     prevValue: Option[String] = None, prevIndex: Option[Int] = None,
     prevExist: Option[Boolean] = None): Future[EtcdResponse]
+  
+  def clearTTL(key: String): Future[EtcdResponse]
 
   def create(parentKey: String, value: String): Future[EtcdResponse]
 
