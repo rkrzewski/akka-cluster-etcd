@@ -27,6 +27,13 @@ case class EtcdResponse(action: String, node: EtcdNode, prevNode: Option[EtcdNod
 case class EtcdError(errorCode: Int, message: String, cause: String, index: Int) extends EtcdMessage
 
 /**
+ * Reification of etcd response timeout.
+ * 
+ * This value is used by [[EtcdOperationActor]], not [[EtcdClient]] itself. 
+ */
+case object EtcdTimeout extends EtcdMessage 
+
+/**
  * Variuos `etcd` error codes are provided as constants.
  *
  * See also [[https://github.com/coreos/etcd/blob/master/Documentation/errorcode.md Etcd documentation]]
