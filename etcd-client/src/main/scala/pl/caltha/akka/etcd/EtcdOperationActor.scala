@@ -29,13 +29,37 @@ class EtcdOperationActor(operation: EtcdClient => Future[EtcdResponse], etcd: Et
   implicit val executionContext = context.system.dispatcher
 
   /**
-   * Send the request to `etcd` server and schedule a timeout event.
+   * Handle the responses, starting with maximum allowed reply count.
    */
-  def send() = {
+  val receive = attempt(retries)
+
+  /**
+   * Handle the incoming events.
+   */
+  def attempt(remaining: Int): Receive = {
+    
+    // Send the request to `etcd` server and schedule a timeout event.
     operation(etcd).recover {
       case EtcdException(error) => error
     }.pipeTo(self)
+
     context.system.scheduler.scheduleOnce(timeout, self, EtcdTimeout)
+    
+    {
+      case response: EtcdResponse =>
+        reply(response)
+      /* an error condition expected by the client (compareAndSwap operation, or similar) */
+      case error @ EtcdError(code, _, _, _) if returnErrors.exists(code == _) =>
+        reply(error)
+      /* a timeout or unexpected error occurred, but more retries are allowed */
+      case _ if remaining > 0 =>
+        context.system.scheduler.scheduleOnce(retryDelay, self, Retry)
+      case Retry =>
+        context.become(attempt(remaining - 1))
+      /* timeout attempts exhausted */
+      case resp: EtcdMessage =>
+        reply(resp)
+    }
   }
 
   /**
@@ -45,37 +69,6 @@ class EtcdOperationActor(operation: EtcdClient => Future[EtcdResponse], etcd: Et
     context.parent ! message
     context.stop(self)
   }
-
-  /**
-   * Handle the incoming events.
-   */
-  def attempt(remaining: Int): Receive = {
-    case response: EtcdResponse =>
-      reply(response)
-    /* an error condition expected by the client (compareAndSwap operation, or similar) */
-    case error @ EtcdError(code, _, _, _) if returnErrors.exists(code == _) =>
-      reply(error)
-    /* a timeout or unexpected error occurred, but more retries are allowed */
-    case _ if remaining > 0 =>
-      context.system.scheduler.scheduleOnce(retryDelay, self, Retry)
-    case Retry =>
-      send()
-      context.become(attempt(remaining - 1))
-    /* timeout attempts exhausted */
-    case resp: EtcdMessage =>
-      reply(resp)
-  }
-
-  /**
-   * Send the initial request.
-   */
-  override def preStart() = send()
-
-  /**
-   * Handle the responses, starting with maximum allowed reply count.
-   */
-  val receive = attempt(retries)
-
 }
 
 /**
