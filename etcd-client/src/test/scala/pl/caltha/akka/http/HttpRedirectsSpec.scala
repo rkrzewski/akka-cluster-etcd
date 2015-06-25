@@ -13,7 +13,7 @@ import akka.http.scaladsl.model.headers.Location
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.RoutingSettings
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
@@ -29,7 +29,7 @@ class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
 
   implicit val executionContext = system.dispatcher
 
-  implicit val flowMaterializer = ActorFlowMaterializer()
+  implicit val Materializer = ActorMaterializer()
 
   implicit val routingSettings = RoutingSettings.default(system)
 

@@ -6,8 +6,8 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 import akka.actor.ActorSystem
-import akka.stream.ActorFlowMaterializer
-import akka.stream.FlowMaterializer
+import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl.FlowGraph
 import akka.stream.scaladsl.Merge
 import akka.stream.scaladsl.Sink
@@ -48,7 +48,7 @@ class EitherJunctionSpec extends FlatSpec with ScalaFutures with Matchers {
 
     implicit val executionContext = system.dispatcher
 
-    implicit val flowMaterializer: FlowMaterializer = ActorFlowMaterializer()
+    implicit val Materializer: Materializer = ActorMaterializer()
 
     whenReady(stream.runWith(Sink.fold(Seq[(Int, String)]())((seq, elem) => elem +: seq))) { result =>
       result.forall { case (i, s) => if (i <= 5) s == "L" else s == "H" } shouldBe true

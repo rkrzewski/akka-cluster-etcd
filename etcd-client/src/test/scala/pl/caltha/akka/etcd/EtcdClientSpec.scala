@@ -8,7 +8,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time._
 
 import akka.actor.ActorSystem
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 
 class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
 
@@ -16,7 +16,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
 
   implicit val exCtx = system.dispatcher
 
-  implicit val mat = ActorFlowMaterializer()
+  implicit val mat = ActorMaterializer()
 
   val etcd = EtcdClient("localhost")
 

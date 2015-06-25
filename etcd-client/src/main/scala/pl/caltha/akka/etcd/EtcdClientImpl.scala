@@ -14,9 +14,8 @@ import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.MediaTypes._
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.Uri._
-import akka.io.Inet.SocketOption
-import akka.stream.ActorFlowMaterializer
-import akka.stream.FlowMaterializer
+import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl._
 import akka.util.ByteString
 
@@ -28,7 +27,6 @@ import pl.caltha.akka.http.HttpRedirects
  * `etcd` client implementation.
  */
 private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
-    socketOptions: Traversable[SocketOption] = Nil,
     httpClientSettings: Option[ClientConnectionSettings] = None)(implicit system: ActorSystem) extends EtcdClient {
 
   private def bool(name: String, value: Boolean): Option[(String, String)] =
@@ -68,6 +66,8 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
   def compareAndDelete(key: String, prevValue: Option[String] = None, prevIndex: Option[Int] = None): Future[EtcdResponse] =
     run(DELETE, key, opt("prevValue", prevValue), opt("prevIndex", prevIndex))
 
+  private implicit val executionContext = system.dispatcher
+
   def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
     quorum: Boolean): Source[EtcdResponse, Unit] = {
     case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Boolean, quorum: Boolean)
@@ -94,12 +94,11 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
 
   // ---------------------------------------------------------------------------------------------  
 
-  private implicit val executionContext = system.dispatcher
 
-  private implicit val flowMaterializer: FlowMaterializer = ActorFlowMaterializer()
+  private implicit val Materializer: Materializer = ActorMaterializer()
 
   private val client =
-    Http(system).outgoingConnection(host, port, options = socketOptions, settings = httpClientSettings.getOrElse(ClientConnectionSettings(system)))
+    Http(system).outgoingConnection(host, port, settings = httpClientSettings.getOrElse(ClientConnectionSettings(system)))
 
   private val redirectHandlingClient = HttpRedirects(client, 3)
 

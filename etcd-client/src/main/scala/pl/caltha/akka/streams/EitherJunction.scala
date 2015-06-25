@@ -2,7 +2,7 @@ package pl.caltha.akka.streams
 
 import scala.collection.immutable.Seq
 import akka.stream.Inlet
-import akka.stream.OperationAttributes
+import akka.stream.Attributes
 import akka.stream.Outlet
 import akka.stream.Shape
 import akka.stream.scaladsl.FlexiRoute
@@ -44,7 +44,7 @@ class EitherJunctionShape[I, L, R](init: EitherJunctionShape.Init[I, L, R] = Nam
   }
 }
 
-class EitherJunction[I, L, R](f: I => Either[L, R]) extends FlexiRoute[I, EitherJunctionShape[I, L, R]](new EitherJunctionShape, OperationAttributes.name("EitherJunction")) {
+class EitherJunction[I, L, R](f: I => Either[L, R]) extends FlexiRoute[I, EitherJunctionShape[I, L, R]](new EitherJunctionShape, Attributes.name("EitherJunction")) {
   override def createRouteLogic(p: PortT) = new RouteLogic[I] {
     override def initialState = State[Any](DemandFromAll(p.left, p.right)) {
       (ctx, _, element) =>

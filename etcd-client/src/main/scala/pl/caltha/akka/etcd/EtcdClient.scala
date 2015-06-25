@@ -6,7 +6,6 @@ import scala.concurrent.Future
 
 import akka.actor.ActorSystem
 import akka.http.ClientConnectionSettings
-import akka.io.Inet.SocketOption
 import akka.stream.scaladsl.Source
 
 /**
@@ -55,8 +54,7 @@ object EtcdClient {
    * @param actorSystem the ActorSystem that will be used for materializing HTTP flows and asynchronous processing.
    */
   def apply(host: String, port: Int = 4001,
-    socketOptions: Traversable[SocketOption] = Nil,
     httpClientSettings: Option[ClientConnectionSettings] = None)(implicit actorSystem: ActorSystem) =
-    new EtcdClientImpl(host, port, socketOptions, httpClientSettings)(actorSystem)
+    new EtcdClientImpl(host, port, httpClientSettings)(actorSystem)
 
 }
