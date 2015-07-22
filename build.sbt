@@ -4,7 +4,7 @@ lazy val commonSettings = Seq(
 )
 
 val akkaVersion = "2.3.11"
-val akkaStreamsVersion = "1.0-RC4"
+val akkaStreamsVersion = "1.0"
 val scalaTestVersion = "2.2.1"
 
 lazy val client = project. 
