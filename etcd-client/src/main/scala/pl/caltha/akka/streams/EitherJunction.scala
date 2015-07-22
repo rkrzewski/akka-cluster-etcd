@@ -18,7 +18,7 @@ object EitherJunctionShape {
 
 class EitherJunctionShape[I, L, R](init: EitherJunctionShape.Init[I, L, R] = Name[I, L, R]("EitherJunction")) extends Shape {
   private val (_in, _left, _right) = init match {
-    case Name(name) => (new Inlet[I](s"$name.in"), new Outlet[L](s"$name.left"), new Outlet[R](s"$name.right"))
+    case Name(name) => (Inlet[I](s"$name.in"), Outlet[L](s"$name.left"), Outlet[R](s"$name.right"))
     case Ports(in, left, right) => (in, left, right)
   }
 
@@ -34,7 +34,7 @@ class EitherJunctionShape[I, L, R](init: EitherJunctionShape.Init[I, L, R] = Nam
     new EitherJunctionShape(Ports(in, left, right))
 
   def deepCopy(): Shape = {
-    construct(new Inlet[I](_in.toString), new Outlet[L](_left.toString), new Outlet[R](_right.toString))
+    construct(Inlet[I](_in.toString), Outlet[L](_left.toString), Outlet[R](_right.toString))
   }
 
   def copyFromPorts(inlets: Seq[Inlet[_]], outlets: Seq[Outlet[_]]): Shape = {
