@@ -1,5 +1,6 @@
 lazy val commonSettings = Seq(
     version := "0.1.0",
+    organization := "pl.caltha",
     scalaVersion := "2.11.7"
 )
 
@@ -9,8 +10,8 @@ val scalaTestVersion = "2.2.1"
 
 lazy val client = project. 
     in(file("etcd-client")). 
-    settings(commonSettings).
-    settings(Seq(
+    settings(commonSettings ++ Seq(
+        name := "etcd-client",
         libraryDependencies ++= Seq(
             "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamsVersion,
             "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamsVersion,
@@ -24,8 +25,8 @@ import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 lazy val discovery = project. 
     in(file("etcd-discovery")).
     dependsOn(client). 
-    settings(commonSettings ++ SbtMultiJvm.multiJvmSettings).
-    settings(Seq(
+    settings(commonSettings ++ SbtMultiJvm.multiJvmSettings ++ Seq(
+        name := "akka-cluster-discovery-etcd",
         libraryDependencies ++= Seq(
             "com.typesafe.akka" %% "akka-actor" % akkaVersion,
             "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
