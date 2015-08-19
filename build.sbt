@@ -15,6 +15,7 @@ lazy val client = project.
         libraryDependencies ++= Seq(
             "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamsVersion,
             "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamsVersion,
+            "com.typesafe.akka" %% "akka-stream-testkit-experimental" % akkaStreamsVersion % "test",
             "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
         )
     ))
