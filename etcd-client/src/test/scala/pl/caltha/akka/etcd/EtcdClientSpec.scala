@@ -9,6 +9,8 @@ import org.scalatest.time._
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import akka.stream.testkit.scaladsl.TestSink
+import akka.stream.scaladsl.Keep
 
 class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
 
@@ -240,6 +242,28 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
       }) { resps =>
         resps.map(_.node.value.get).reverse should contain inOrderOnly ("1", "2", "3")
       }
+    }
+  }
+
+  it should "allow cancelling the stream of updates" in {
+    whenReady(for {
+      _ <- etcd.createDir(baseKey + "watch2")
+      resp <- etcd.create(baseKey + "watch2", "1")
+      _ <- etcd.create(baseKey + "watch2", "2")
+      _ <- etcd.create(baseKey + "watch2", "3")
+    } yield resp) { resp =>
+      val createdIndex = resp.node.createdIndex
+      val source = etcd.watch(baseKey + "watch2", Some(createdIndex), true)
+      val sink = TestSink.probe[EtcdResponse]
+      val (cancellable, probe) = source.toMat(sink)(Keep.both).run()
+      probe.request(1)
+      probe.expectNext() 
+      cancellable.cancel()
+      probe.request(1)
+      // one extra element is returned
+      probe.expectNext()
+      // but stream completes eventually
+      probe.expectComplete()
     }
   }
 }

@@ -7,6 +7,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.actor.ActorSystem
+import akka.actor.Cancellable
 import akka.http.ClientConnectionSettings
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -22,6 +23,7 @@ import akka.util.ByteString
 import spray.json._
 
 import pl.caltha.akka.http.HttpRedirects
+import pl.caltha.akka.streams.FlowBreaker
 
 /**
  * `etcd` client implementation.
@@ -69,10 +71,10 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
   private implicit val executionContext = system.dispatcher
 
   def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
-    quorum: Boolean): Source[EtcdResponse, Unit] = {
+    quorum: Boolean): Source[EtcdResponse, Cancellable] = {
     case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Boolean, quorum: Boolean)
     val init = WatchRequest(key, waitIndex, recursive, quorum)
-    Source[EtcdResponse]() { implicit b =>
+    Source[EtcdResponse, Cancellable](FlowBreaker[WatchRequest]) { implicit b => breaker =>
       import FlowGraph.Implicits._
 
       val initReq = b.add(Source.single(init))
@@ -85,9 +87,8 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
       val respUnzip = b.add(Unzip[WatchRequest, EtcdResponse]())
 
       initReq ~> reqMerge.in(0)
-      reqMerge ~> runWait
-      runWait ~> respUnzip.in
-      respUnzip.out0 ~> reqMerge.in(1)
+      reqMerge ~> runWait ~> respUnzip.in
+      respUnzip.out0 ~> breaker ~> reqMerge.in(1)
       respUnzip.out1
     }
   }

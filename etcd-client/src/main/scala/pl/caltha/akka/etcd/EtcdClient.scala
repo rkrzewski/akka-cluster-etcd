@@ -5,6 +5,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.actor.ActorSystem
+import akka.actor.Cancellable
 import akka.http.ClientConnectionSettings
 import akka.stream.scaladsl.Source
 
@@ -35,7 +36,7 @@ trait EtcdClient {
   def compareAndDelete(key: String, prevValue: Option[String] = None, prevIndex: Option[Int] = None): Future[EtcdResponse]
 
   def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean = false,
-    quorum: Boolean = false): Source[EtcdResponse, Unit]
+    quorum: Boolean = false): Source[EtcdResponse, Cancellable]
 
 }
 
