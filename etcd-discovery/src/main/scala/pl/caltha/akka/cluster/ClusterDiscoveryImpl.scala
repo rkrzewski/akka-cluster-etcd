@@ -20,4 +20,10 @@ class ClusterDiscoveryImpl(extendedSystem: ExtendedActorSystem) extends Extensio
 
   private val cluster = Cluster(system)
 
+  private val discovery = system.actorOf(ClusterDiscoveryActor.props(etcd, cluster, discoverySettings))
+
+  def start(): Unit = {
+    discovery ! ClusterDiscoveryActor.Start
+  }
+
 }

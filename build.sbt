@@ -7,6 +7,7 @@ lazy val commonSettings = Seq(
 val akkaVersion = "2.3.11"
 val akkaStreamsVersion = "1.0"
 val scalaTestVersion = "2.2.1"
+val mocitoVersion = "1.10.19"
 
 lazy val client = project. 
     in(file("etcd-client")). 
@@ -32,7 +33,8 @@ lazy val discovery = project.
             "com.typesafe.akka" %% "akka-actor" % akkaVersion,
             "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
             "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % "test",
-            "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+            "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
+            "org.mockito" % "mockito-core" % mocitoVersion % "test"
         ),
         // make sure that MultiJvm test are compiled by the default test compilation
 	    compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
