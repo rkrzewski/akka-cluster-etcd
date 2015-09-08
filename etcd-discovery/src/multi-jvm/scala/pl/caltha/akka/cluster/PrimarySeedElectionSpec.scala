@@ -36,18 +36,16 @@ abstract class PrimarySeedElectionSpec(multiNodeConfig: PrimarySeedElectionMulti
 
   override def beforeAll() = {
     super.beforeAll()
-    
-    val discoverySettings = ClusterDiscoverySettings.load(system.settings.config)    
+
+    val discoverySettings = ClusterDiscoverySettings.load(system.settings.config)
     val httpClientSettings = ClientConnectionSettings(system).copy(
-    		connectingTimeout = discoverySettings.etcdConnectionTimeout,
-    		idleTimeout = discoverySettings.etcdRequestTimeout)    
+      connectingTimeout = discoverySettings.etcdConnectionTimeout,
+      idleTimeout = discoverySettings.etcdRequestTimeout)
     val etcd = EtcdClient(discoverySettings.etcdHost, discoverySettings.etcdPort, Some(httpClientSettings))
-    Await.ready(etcd.delete("/akka", recursive = true), 3.seconds)    
+    Await.ready(etcd.delete("/akka", recursive = true), 3.seconds)
   }
-  
+
   "ClusterDiscoveryExtension" should "bootstrap a cluster" in {
-
-
     Cluster(system).subscribe(testActor, classOf[MemberUp])
     expectMsgClass(classOf[CurrentClusterState])
     Thread.sleep(Random.nextInt(1000)) //add some randomenss to when the joins happen
@@ -59,5 +57,4 @@ abstract class PrimarySeedElectionSpec(multiNodeConfig: PrimarySeedElectionMulti
 
     enterBarrier("done")
   }
-
 }
