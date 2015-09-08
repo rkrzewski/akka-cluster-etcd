@@ -52,8 +52,8 @@ abstract class PrimarySeedElectionSpec(multiNodeConfig: PrimarySeedElectionMulti
     ClusterDiscovery(system).start()
 
     expectMsgClass(10.seconds, classOf[MemberUp])
-    expectMsgClass(classOf[MemberUp])
-    expectMsgClass(classOf[MemberUp])
+    expectMsgClass(10.seconds, classOf[MemberUp])
+    expectMsgClass(10.seconds, classOf[MemberUp])
 
     enterBarrier("done")
   }
