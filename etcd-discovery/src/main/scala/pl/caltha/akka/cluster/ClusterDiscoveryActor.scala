@@ -79,6 +79,7 @@ class ClusterDiscoveryActor(
       // bootstrap the cluster
       cluster.join(cluster.selfAddress)
       cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent])
+      seedList ! SeedListActor.ManageSeeds
   }
 
   when(Leader) {
