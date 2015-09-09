@@ -1,4 +1,4 @@
-package pl.caltha.akka.cluster
+package pl.caltha.akka.cluster.multijvm
 
 import scala.annotation.varargs
 import scala.concurrent.duration.DurationInt
@@ -10,6 +10,8 @@ import akka.cluster.ClusterEvent.MemberUp
 import akka.remote.testkit.MultiNodeConfig
 import akka.remote.testkit.MultiNodeSpec
 import akka.http.ClientConnectionSettings
+import pl.caltha.akka.cluster.ClusterDiscovery
+import pl.caltha.akka.cluster.ClusterDiscoverySettings;
 import pl.caltha.akka.etcd.EtcdClient
 import scala.concurrent.Await
 
