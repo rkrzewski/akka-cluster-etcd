@@ -48,6 +48,8 @@ class ClusterDiscoveryActor(
       stay()
     case Event(_: EtcdResponse, _) =>
       goto(Election)
+    case Event(EtcdError(EtcdError.NodeExist, _, _, _), _) =>
+      goto(Election)
     // I'd expect EtcdError.NodeExists, but that's what we get when /akka already exists
     case Event(EtcdError(EtcdError.NotFile, _, _, _), _) =>
       goto(Election)
