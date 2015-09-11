@@ -9,7 +9,7 @@ import akka.actor.LoggingFSM
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.InitialStateAsEvents
+import akka.cluster.ClusterEvent.InitialStateAsSnapshot
 import akka.cluster.ClusterEvent.MemberEvent
 import akka.cluster.ClusterEvent.MemberExited
 import akka.cluster.ClusterEvent.MemberRemoved
@@ -21,16 +21,16 @@ import pl.caltha.akka.etcd.EtcdError
 import pl.caltha.akka.etcd.EtcdException
 import pl.caltha.akka.etcd.EtcdNode
 import pl.caltha.akka.etcd.EtcdResponse
-
-import ClusterDiscoveryActor._
-import SeedListActor._
+import akka.cluster.ClusterEvent.CurrentClusterState
 
 class ClusterDiscoveryActor(
     etcdClient: EtcdClient,
     cluster: Cluster,
-    settings: ClusterDiscoverySettings) extends LoggingFSM[State, Data] {
+    settings: ClusterDiscoverySettings) extends LoggingFSM[ClusterDiscoveryActor.State, ClusterDiscoveryActor.Data] {
 
-  private implicit val executor = context.system.dispatcher
+	import ClusterDiscoveryActor._
+
+	private implicit val executor = context.system.dispatcher
 
   def etcd(operation: EtcdClient => Future[EtcdResponse]) =
     operation(etcdClient).recover {
@@ -38,7 +38,6 @@ class ClusterDiscoveryActor(
     }.pipeTo(self)
 
   val seedList = context.actorOf(SeedListActor.props(etcdClient, settings))
-  import SeedListActor._
 
   when(Initial) {
     case Event(Start, _) =>
@@ -80,20 +79,22 @@ class ClusterDiscoveryActor(
     case _ -> Leader =>
       // bootstrap the cluster
       cluster.join(cluster.selfAddress)
-      cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent])
-      seedList ! SeedListActor.ManageSeeds
+      cluster.subscribe(self, initialStateMode = InitialStateAsSnapshot, classOf[MemberEvent])
   }
 
   when(Leader) {
+    case Event(CurrentClusterState(members, _, _, _, _), _) =>
+      seedList ! SeedListActor.InitialState(members.map(_.address.toString))
+      stay().using(members.map(_.address))
     case Event(MemberUp(member), seeds) =>
-      seedList ! Add(member)
+      seedList ! SeedListActor.MemberAdded(member.address.toString)
       stay().using(seeds + member.address)
     case Event(MemberExited(member), seeds) =>
-      seedList ! Remove(member)
+      seedList ! SeedListActor.MemberRemoved(member.address.toString)
       stay().using(seeds - member.address)
     case Event(MemberRemoved(member, _), seeds) =>
       if (seeds.contains(member.address))
-        seedList ! Remove(member)
+        seedList ! SeedListActor.MemberRemoved(member.address.toString)
       stay().using(seeds - member.address)
   }
 
