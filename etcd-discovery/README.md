@@ -16,18 +16,17 @@ The election is performed by attempting a `compareAndSet` operation with `prevEx
 option on a `<prefix>/akka/leader` path within etcd key space. The value written will be textual
 representation of `akka.actor.Address` of the contending node. 
 
-After creating / joining a cluster, each node will register an instance of 
-[Cluster singleton](http://doc.akka.io/docs/akka/2.3.12/scala/cluster-usage.html#Cluster_Singleton)
-responsible for maintaining public list of seeds. `ClusterSingletonManager` will ensure that 
-exactly one instance of the singleton is active at any given time. The singleton will maintain
-a list of seeds by creating nodes under `<prefix>/akka/seeds` in etcd keyspace. It will add entries
-when new nodes arrive (until reaching a predefined number of seeds) and remove entries if any of 
-the nodes registered as seeds leave the cluster.
+After winning the election, the leader node will maintain a list of seeds by registering them under 
+`<prefix>/akka/seeds` in etcd keyspace. It will add entries when new nodes arrive (until reaching 
+a predefined number of seeds) and remove entries if any of the nodes registered as seeds leave the 
+cluster.
 
-When the Akka cluster's leader quits and a new leader is elected, which causes aforementioned 
-singleton instance to be activated on the new leader node, the instance will write it's own address
-as `<prefix>/akka/leader` entry and will update the contents of `<prefix>/akka/seeds` subtree to
-reflect it's knowledge of cluster membership.
+The nodes that lose the election will become followers - they will consult the seed list published
+by the leader to join the cluster. At the same time, instance of the actor responsible for cluster
+discovery will remain active and subscribed to cluster lifecycle events. When the Akka cluster's 
+leader quits and a new leader is elected, an instance of the discovery actor will assume leader 
+role: it will write it's own address as `<prefix>/akka/leader` entry and will update the contents 
+of `<prefix>/akka/seeds` subtree to reflect it's knowledge of cluster membership.
 
 When a new node joins the cluster, loses the leader election (`<prefix>/akka/leader` exists) but
 `<prefix>/akka/seeds` does not exist, is empty, or no nodes in the seed list can be contacted,
@@ -47,3 +46,13 @@ latter might be not be a problem in practice, due to etcd design. Then again, wr
 partition-tolerant distributed systems is HARD. If you wish to be scared/amused with the problems
 with widely used distributed software I heartily recommend [Jepsen](https://aphyr.com/tags/Jepsen) 
 series on Kyle Kingsbury's blog.
+
+Note on running tests
+---------------------
+
+The integration tests require an instance of etcd running at `localhost:4001`. This can be easily
+accomplished using Docker:
+```
+docker run -d --name etcd --net host quay.io/coreos/etcd:v2.0.9 \
+-advertise-client-urls http://localhost:4001 -listen-client-urls http://localhost:4001
+```
