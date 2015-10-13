@@ -1,6 +1,11 @@
 Akka cluster management using etcd
 ==================================
 
+[![Travis Widget]][Travis]
+
+[Travis]: https://travis-ci.org/rkrzewski/akka-cluster-etcd
+[Travis Widget]: https://travis-ci.org/rkrzewski/akka-cluster-etcd.svg?branch=master
+
 Running an [Akka cluster](http://doc.akka.io/docs/akka/2.4.0/common/cluster.html) requires 
 establishing a set of _seed nodes_. The purpose of them is two-fold: all nodes joining the cluster 
 do so by contacting any of the seed nodes over the network, and one of the seed nodes bootstraps 
