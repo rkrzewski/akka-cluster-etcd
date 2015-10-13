@@ -1,12 +1,14 @@
+scalaVersion := "2.11.7"
+
 lazy val commonSettings = Seq(
     version := "0.1.0",
     organization := "pl.caltha",
     scalaVersion := "2.11.7"
 )
 
-val akkaVersion = "2.3.11"
+val akkaVersion = "2.4.0"
 val akkaStreamsVersion = "1.0"
-val scalaTestVersion = "2.2.1"
+val scalaTestVersion = "2.2.5"
 val mocitoVersion = "1.10.19"
 
 lazy val client = project. 
