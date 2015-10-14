@@ -1,7 +1,6 @@
 package pl.caltha.akka.http
 
 import scala.concurrent.Future
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.HttpMethods.GET
@@ -18,10 +17,11 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.http.scaladsl.marshalling.ToResponseMarshallable.apply
-
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.Millis
+import org.scalatest.time.Span
 
 class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
 
@@ -57,6 +57,8 @@ class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
   def request(serverFlow: Flow[HttpRequest, HttpResponse, Unit]): Future[HttpResponse] =
     Source.single(HttpRequest(GET).withUri("/0")).via(serverFlow).runWith(Sink.head)
 
+  implicit val patience = PatienceConfig(timeout = scaled(Span(1000, Millis)))  
+    
   "redirect-enabled client" should "handle a direct response" in {
     val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 0), 3)
     whenReady(request(flow)) {
