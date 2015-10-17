@@ -80,6 +80,7 @@ class ClusterDiscoveryActor(
       // bootstrap the cluster
       cluster.join(cluster.selfAddress)
       cluster.subscribe(self, initialStateMode = InitialStateAsSnapshot, classOf[MemberEvent])
+      context.actorOf(LeaderEntryActor.props(cluster.selfAddress.toString, etcdClient, settings))
   }
 
   when(Leader) {

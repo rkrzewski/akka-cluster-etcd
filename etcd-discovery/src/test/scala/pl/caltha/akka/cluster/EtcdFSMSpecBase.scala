@@ -25,7 +25,7 @@ abstract class EtcdFSMSpecBase[State, Data](_system: ActorSystem)
   def this() =
     this(ActorSystem("testsystem"))
 
-  val settings = ClusterDiscoverySettings.load(system.settings.config)
+  def settings = ClusterDiscoverySettings.load(system.settings.config)
 
   def transitionTimeout = 10.seconds
 
