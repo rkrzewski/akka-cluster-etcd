@@ -19,24 +19,24 @@ import pl.caltha.akka.streams.EitherJunction
  * HTTP redirects support for Akka HTTP Client
  * {{{
  *                                                                 +----------------+
- *                          +--------------------------------------|redirectJunction|--->>>
+ *                          +--------------------------------------|redirectJunction|--→>>
  *                          |                                      +----------------+
  *                          |                                               ^
  *                          |                                               |
  *       +----------+       |                                         +----------+
- *       |origReqNum|       |                +----------------------->|reqRespZip|
+ *       |origReqNum|       |                +----------------------→|reqRespZip|
  *       +----------+       |                |                        +----------+
  *            |             |                |                              ^
  *            v             v                |                              |
  *       +----------+   +--------+   +---------------+   +----------+   +--------+
- * >>>---|origReqZip|-->|reqMerge|-->|reqNumBroadcast|-->|extractReq|-->|  http  |
+ * >>>---|origReqZip|-→|reqMerge|-→|reqNumBroadcast|-→|extractReq|-→|  http  |
  *       +----------+   +--------+   +---------------+   +----------+   +--------+
  * }}}
  */
 object HttpRedirects {
   /**
    * Augments client flow with the capability to follow HTTP redirects up to a specified depth.
-   * 
+   *
    * @param httpFlow the request to response flow that will be used to contact the server.
    * @param maxRedirects maximum number of redirects that will be accepted. When server returns a
    *        redirect code for the final request, processing will be terminated with `310 Too many
@@ -46,21 +46,21 @@ object HttpRedirects {
    * @return augmented request to response flow.
    */
   def apply(httpFlow: Flow[HttpRequest, HttpResponse, _], maxRedirects: Int, redirectStatuses: Set[Int] = Set(301, 302, 307)): Flow[HttpRequest, HttpResponse, Unit] =
-    Flow[HttpRequest, HttpResponse]() { implicit b =>
+    Flow[HttpRequest, HttpResponse]() { implicit b ⇒
       import FlowGraph.Implicits._
 
       val origReqNum = b.add(Source.repeat(0))
       val origReqZip = b.add(Zip[HttpRequest, Int]())
       val reqMerge = b.add(Merge[(HttpRequest, Int)](2))
       val reqNumBroadcast = b.add(Broadcast[(HttpRequest, Int)](2))
-      val extractReq = b.add(Flow[(HttpRequest, Int)].map { case (req, _) => req })
+      val extractReq = b.add(Flow[(HttpRequest, Int)].map { case (req, _) ⇒ req })
       val http = b.add(httpFlow)
       val reqRespZip = b.add(Zip[(HttpRequest, Int), HttpResponse]())
       val redirectJunction = b.add(EitherJunction[((HttpRequest, Int), HttpResponse), (HttpRequest, Int), HttpResponse] {
-        case ((request, requestNum), response) =>
+        case ((request, requestNum), response) ⇒
           if (redirectStatuses.contains(response.status.intValue()) && response.header[Location].isDefined)
             if (requestNum < maxRedirects)
-              Left((response.header[Location].map(location => request.withUri(location.uri)).get, requestNum + 1))
+              Left((response.header[Location].map(location ⇒ request.withUri(location.uri)).get, requestNum + 1))
             else
               Right(HttpResponse(StatusCodes.custom(310, "Too many redirects")))
           else

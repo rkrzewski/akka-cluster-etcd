@@ -17,11 +17,11 @@ import akka.stream.scaladsl.Zip
 class EitherJunctionSpec extends FlatSpec with ScalaFutures with Matchers {
 
   "EitherJunction" should "route inputs properly" in {
-    val stream = Source() { implicit b =>
+    val stream = Source() { implicit b ⇒
       import FlowGraph.Implicits._
 
       val source = b.add(Source(1 to 10))
-      val either = b.add(EitherJunction[Int, Int, Int] { i =>
+      val either = b.add(EitherJunction[Int, Int, Int] { i ⇒
         if (i <= 5) Left(i)
         else Right(i)
       })
@@ -50,8 +50,8 @@ class EitherJunctionSpec extends FlatSpec with ScalaFutures with Matchers {
 
     implicit val Materializer: Materializer = ActorMaterializer()
 
-    whenReady(stream.runWith(Sink.fold(Seq[(Int, String)]())((seq, elem) => elem +: seq))) { result =>
-      result.forall { case (i, s) => if (i <= 5) s == "L" else s == "H" } shouldBe true
+    whenReady(stream.runWith(Sink.fold(Seq[(Int, String)]())((seq, elem) ⇒ elem +: seq))) { result ⇒
+      result.forall { case (i, s) ⇒ if (i <= 5) s == "L" else s == "H" } shouldBe true
     }
   }
 }

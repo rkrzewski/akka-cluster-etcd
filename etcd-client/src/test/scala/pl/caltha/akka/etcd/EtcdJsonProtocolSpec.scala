@@ -20,11 +20,11 @@ class EtcdJsonProtocolSpec extends FlatSpec with Matchers {
       "ttl": 30
     }""".parseJson.convertTo[EtcdNode]
     node.expiration match {
-      case Some(i) => 
+      case Some(i) ⇒
         i.getYear shouldBe 2013
         i.getMonth shouldBe Month.DECEMBER
         i.getDayOfMonth shouldBe 11
-      case _ => fail
+      case _ ⇒ fail
     }
   }
 

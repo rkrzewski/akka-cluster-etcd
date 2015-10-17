@@ -85,7 +85,7 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
 
     def createResp2 =
       createResp(132, addr2)
-      
+
     val failure =
       EtcdException(EtcdError(EtcdError.RaftInternal, "", "", 100))
   }
@@ -174,8 +174,8 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
   it should "retry fetching registered seeds in case of errors" in new Fixture {
     val seedsErrorPromise = Promise[EtcdResponse]
     val seedsSuccessPromise = Promise[EtcdResponse]
-    when(fetchSeedsReq).thenReturn(seedsErrorPromise.future).thenReturn(seedsSuccessPromise.future)      
-      
+    when(fetchSeedsReq).thenReturn(seedsErrorPromise.future).thenReturn(seedsSuccessPromise.future)
+
     val seedList = init(settings.copy(etcdRetryDelay = 500.milliseconds))
     seedList ! InitialState(Set.empty)
     expectTransitionTo(AwaitingRegisterdSeeds)
@@ -187,41 +187,41 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
     seedsSuccessPromise.success(noSeedsResp)
     expectTransitionTo(AwaitingCommand)
   }
-  
+
   it should "retry Add / Remove operations in case of errors" in new Fixture {
-    val seedsPromise = Promise[EtcdResponse]    
+    val seedsPromise = Promise[EtcdResponse]
     val createPromiseError = Promise[EtcdResponse]
-    val createPromise1 = Promise[EtcdResponse]    
+    val createPromise1 = Promise[EtcdResponse]
     val deletePromiseError = Promise[EtcdResponse]
     val deletePromise1 = Promise[EtcdResponse]
     when(fetchSeedsReq).thenReturn(seedsPromise.future)
     when(createReq1).thenReturn(createPromiseError.future).thenReturn(createPromise1.future)
     when(deleteReq1).thenReturn(deletePromiseError.future).thenReturn(deletePromise1.future)
-    
+
     val seedList = init(settings.copy(etcdRetryDelay = 500.milliseconds))
     seedList ! InitialState(Set.empty)
     expectTransitionTo(AwaitingRegisterdSeeds)
 
     seedsPromise.success(noSeedsResp)
     expectTransitionTo(AwaitingCommand)
-    
+
     seedList ! MemberAdded(addr1)
     expectTransitionTo(AwaitingEtcdReply)
-    
+
     createPromiseError.failure(failure)
     expectTransitionTo(AwaitingCommand)
     expectTransitionTo(AwaitingEtcdReply)
-    
+
     createPromise1.success(createResp1)
     expectTransitionTo(AwaitingCommand)
-    
+
     seedList ! MemberRemoved(addr1)
     expectTransitionTo(AwaitingEtcdReply)
-    
+
     deletePromiseError.failure(failure)
     expectTransitionTo(AwaitingCommand)
     expectTransitionTo(AwaitingEtcdReply)
-    
+
     deletePromise1.success(deleteResp1)
     expectTransitionTo(AwaitingCommand)
   }

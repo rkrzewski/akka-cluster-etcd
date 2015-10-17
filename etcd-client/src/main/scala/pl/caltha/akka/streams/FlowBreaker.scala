@@ -16,6 +16,6 @@ object FlowBreaker {
       override def cancel() = cancelled.compareAndSet(false, true)
       override def isCancelled() = cancelled.get
     }
-    Flow[T].takeWhile(_ => !cancellable.isCancelled).mapMaterializedValue(_ => cancellable)
+    Flow[T].takeWhile(_ ⇒ !cancellable.isCancelled).mapMaterializedValue(_ ⇒ cancellable)
   }
 }

@@ -37,12 +37,12 @@ abstract class EtcdFSMSpecBase[State, Data](_system: ActorSystem)
 
     def expectTransitionTo(expState: State) =
       stateProbe.expectMsgType[Transition[State]](transitionTimeout) should matchPattern {
-        case Transition(_, _, state) if state == expState =>
+        case Transition(_, _, state) if state == expState ⇒
       }
 
     def expectInitialState(expState: State) =
       stateProbe.expectMsgType[CurrentState[State]](transitionTimeout) should matchPattern {
-        case CurrentState(_, state) if state == expState =>
+        case CurrentState(_, state) if state == expState ⇒
       }
   }
 
@@ -50,4 +50,3 @@ abstract class EtcdFSMSpecBase[State, Data](_system: ActorSystem)
     system.shutdown()
   }
 }
-  

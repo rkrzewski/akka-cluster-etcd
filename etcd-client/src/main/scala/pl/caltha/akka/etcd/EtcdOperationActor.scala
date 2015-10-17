@@ -21,7 +21,7 @@ import akka.actor.Props
  *        will be retried up to `retries` number of times. When retries are exhausted, the result of last
  *        unsuccessful operation will be sent back.
  */
-class EtcdOperationActor(operation: EtcdClient => Future[EtcdResponse], etcd: EtcdClient,
+class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], etcd: EtcdClient,
     returnErrors: Traversable[Int], timeout: FiniteDuration, retryDelay: FiniteDuration, retries: Int) extends Actor {
 
   import EtcdOperationActor._
@@ -37,27 +37,27 @@ class EtcdOperationActor(operation: EtcdClient => Future[EtcdResponse], etcd: Et
    * Handle the incoming events.
    */
   def attempt(remaining: Int): Receive = {
-    
+
     // Send the request to `etcd` server and schedule a timeout event.
     operation(etcd).recover {
-      case EtcdException(error) => error
+      case EtcdException(error) ⇒ error
     }.pipeTo(self)
 
     context.system.scheduler.scheduleOnce(timeout, self, EtcdTimeout)
-    
+
     {
-      case response: EtcdResponse =>
+      case response: EtcdResponse ⇒
         reply(response)
       /* an error condition expected by the client (compareAndSwap operation, or similar) */
-      case error @ EtcdError(code, _, _, _) if returnErrors.exists(code == _) =>
+      case error @ EtcdError(code, _, _, _) if returnErrors.exists(code == _) ⇒
         reply(error)
       /* a timeout or unexpected error occurred, but more retries are allowed */
-      case _ if remaining > 0 =>
+      case _ if remaining > 0 ⇒
         context.system.scheduler.scheduleOnce(retryDelay, self, Retry)
-      case Retry =>
+      case Retry ⇒
         context.become(attempt(remaining - 1))
       /* timeout attempts exhausted */
-      case resp: EtcdMessage =>
+      case resp: EtcdMessage ⇒
         reply(resp)
     }
   }
@@ -91,7 +91,7 @@ object EtcdOperationActor {
    * @param operation the operation that will be performed
    */
   def props(etcd: EtcdClient, returnErrors: Traversable[Int], timeout: FiniteDuration,
-    retryDelay: FiniteDuration, retries: Int)(operation: EtcdClient => Future[EtcdResponse]) =
+    retryDelay: FiniteDuration, retries: Int)(operation: EtcdClient ⇒ Future[EtcdResponse]) =
     Props(classOf[EtcdOperationActor], operation, etcd, returnErrors, timeout, retries)
 
   /** Message sent to self after retryDelay time elapses */

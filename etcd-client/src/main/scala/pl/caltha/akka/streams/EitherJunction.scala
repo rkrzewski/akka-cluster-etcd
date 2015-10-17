@@ -18,8 +18,8 @@ object EitherJunctionShape {
 
 class EitherJunctionShape[I, L, R](init: EitherJunctionShape.Init[I, L, R] = Name[I, L, R]("EitherJunction")) extends Shape {
   private val (_in, _left, _right) = init match {
-    case Name(name) => (Inlet[I](s"$name.in"), Outlet[L](s"$name.left"), Outlet[R](s"$name.right"))
-    case Ports(in, left, right) => (in, left, right)
+    case Name(name) ⇒ (Inlet[I](s"$name.in"), Outlet[L](s"$name.left"), Outlet[R](s"$name.right"))
+    case Ports(in, left, right) ⇒ (in, left, right)
   }
 
   def in: Inlet[I] = _in
@@ -44,13 +44,13 @@ class EitherJunctionShape[I, L, R](init: EitherJunctionShape.Init[I, L, R] = Nam
   }
 }
 
-class EitherJunction[I, L, R](f: I => Either[L, R]) extends FlexiRoute[I, EitherJunctionShape[I, L, R]](new EitherJunctionShape, Attributes.name("EitherJunction")) {
+class EitherJunction[I, L, R](f: I ⇒ Either[L, R]) extends FlexiRoute[I, EitherJunctionShape[I, L, R]](new EitherJunctionShape, Attributes.name("EitherJunction")) {
   override def createRouteLogic(p: PortT) = new RouteLogic[I] {
     override def initialState = State[Any](DemandFromAll(p.left, p.right)) {
-      (ctx, _, element) =>
+      (ctx, _, element) ⇒
         f(element) match {
-          case Left(l) => ctx.emit(p.left)(l)
-          case Right(r) => ctx.emit(p.right)(r)
+          case Left(l) ⇒ ctx.emit(p.left)(l)
+          case Right(r) ⇒ ctx.emit(p.right)(r)
         }
         SameState
     }
@@ -59,5 +59,5 @@ class EitherJunction[I, L, R](f: I => Either[L, R]) extends FlexiRoute[I, Either
 }
 
 object EitherJunction {
-  def apply[I, L, R](f: I => Either[L, R]) = new EitherJunction(f)
+  def apply[I, L, R](f: I ⇒ Either[L, R]) = new EitherJunction(f)
 }

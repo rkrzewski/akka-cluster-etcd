@@ -35,7 +35,7 @@ class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
 
   def mockServerFlow(numRedicects: Int): Flow[HttpRequest, HttpResponse, Unit] = {
     val route = get {
-      pathPrefix(IntNumber) { num =>
+      pathPrefix(IntNumber) { num ⇒
         if (num < numRedicects)
           overrideStatusCode(StatusCodes.TemporaryRedirect) {
             respondWithHeader(Location(s"/${num + 1}")) {
@@ -57,12 +57,12 @@ class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
   def request(serverFlow: Flow[HttpRequest, HttpResponse, Unit]): Future[HttpResponse] =
     Source.single(HttpRequest(GET).withUri("/0")).via(serverFlow).runWith(Sink.head)
 
-  implicit val patience = PatienceConfig(timeout = scaled(Span(1000, Millis)))  
-    
+  implicit val patience = PatienceConfig(timeout = scaled(Span(1000, Millis)))
+
   "redirect-enabled client" should "handle a direct response" in {
     val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 0), 3)
     whenReady(request(flow)) {
-      resp =>
+      resp ⇒
         resp.status shouldBe StatusCodes.OK
     }
   }
@@ -70,7 +70,7 @@ class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
   it should "handle appropriate number redirects" in {
     val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 3), 3)
     whenReady(request(flow)) {
-      resp =>
+      resp ⇒
         resp.status shouldBe StatusCodes.OK
     }
   }
@@ -78,7 +78,7 @@ class HttpRedirectsSpec extends FlatSpec with Matchers with ScalaFutures {
   it should "handle a suspected redirect loop with 310 status" in {
     val flow = HttpRedirects.apply(mockServerFlow(numRedicects = 4), 3)
     whenReady(request(flow)) {
-      resp =>
+      resp ⇒
         resp.status.intValue() shouldBe 310
     }
   }

@@ -28,10 +28,10 @@ case class EtcdError(errorCode: Int, message: String, cause: String, index: Int)
 
 /**
  * Reification of etcd response timeout.
- * 
- * This value is used by [[EtcdOperationActor]], not [[EtcdClient]] itself. 
+ *
+ * This value is used by [[EtcdOperationActor]], not [[EtcdClient]] itself.
  */
-case object EtcdTimeout extends EtcdMessage 
+case object EtcdTimeout extends EtcdMessage
 
 /**
  * Variuos `etcd` error codes are provided as constants.

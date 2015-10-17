@@ -29,11 +29,11 @@ class EtcdInternalException(error: EtcdError) extends EtcdException(error)
  * Factory of [[EtcdException]] objects.
  */
 object EtcdException {
-  
+
   /**
    * Creates an instance of a subclass of `EtcdException`, approprate for the error code provided
    * in `error` parameter.
-   *   
+   *
    * @param error information about the error provided by `etcd`.
    */
   def apply(error: EtcdError) = {
@@ -48,7 +48,7 @@ object EtcdException {
 
   /**
    * Extracts [[EtcdError]] value from a [[EtcdException]] instance.
-   * 
+   *
    * This allows pattern matching on EtcdExceptions:
    * {{{
    * ex match {

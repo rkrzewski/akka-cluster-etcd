@@ -28,34 +28,34 @@ class ClusterDiscoveryActor(
     cluster: Cluster,
     settings: ClusterDiscoverySettings) extends LoggingFSM[ClusterDiscoveryActor.State, ClusterDiscoveryActor.Data] {
 
-	import ClusterDiscoveryActor._
+  import ClusterDiscoveryActor._
 
-	private implicit val executor = context.system.dispatcher
+  private implicit val executor = context.system.dispatcher
 
-  def etcd(operation: EtcdClient => Future[EtcdResponse]) =
+  def etcd(operation: EtcdClient ⇒ Future[EtcdResponse]) =
     operation(etcdClient).recover {
-      case ex: EtcdException => ex.error
+      case ex: EtcdException ⇒ ex.error
     }.pipeTo(self)
 
   val seedList = context.actorOf(SeedListActor.props(etcdClient, settings))
 
   when(Initial) {
-    case Event(Start, _) =>
+    case Event(Start, _) ⇒
       etcd(_.createDir(
         key = settings.etcdPath,
         ttl = None))
       stay()
-    case Event(_: EtcdResponse, _) =>
+    case Event(_: EtcdResponse, _) ⇒
       goto(Election)
-    case Event(EtcdError(EtcdError.NodeExist, _, _, _), _) =>
+    case Event(EtcdError(EtcdError.NodeExist, _, _, _), _) ⇒
       goto(Election)
     // I'd expect EtcdError.NodeExists, but that's what we get when /akka already exists
-    case Event(EtcdError(EtcdError.NotFile, _, _, _), _) =>
+    case Event(EtcdError(EtcdError.NotFile, _, _, _), _) ⇒
       goto(Election)
   }
 
   onTransition {
-    case _ -> Election =>
+    case (_, Election) ⇒
       etcd(_.compareAndSet(
         key = settings.leaderPath,
         value = cluster.selfAddress.toString,
@@ -66,17 +66,17 @@ class ClusterDiscoveryActor(
   }
 
   when(Election) {
-    case Event(_: EtcdResponse, _) =>
+    case Event(_: EtcdResponse, _) ⇒
       goto(Leader)
-    case Event(EtcdError(EtcdError.NodeExist, _, _, _), _) =>
+    case Event(EtcdError(EtcdError.NodeExist, _, _, _), _) ⇒
       goto(Follower)
-    case Event(err @ EtcdError, _) =>
+    case Event(err @ EtcdError, _) ⇒
       log.error(s"Election error: $err")
       stay()
   }
 
   onTransition {
-    case _ -> Leader =>
+    case (_, Leader) ⇒
       // bootstrap the cluster
       cluster.join(cluster.selfAddress)
       cluster.subscribe(self, initialStateMode = InitialStateAsSnapshot, classOf[MemberEvent])
@@ -84,16 +84,16 @@ class ClusterDiscoveryActor(
   }
 
   when(Leader) {
-    case Event(CurrentClusterState(members, _, _, _, _), _) =>
+    case Event(CurrentClusterState(members, _, _, _, _), _) ⇒
       seedList ! SeedListActor.InitialState(members.map(_.address.toString))
       stay().using(members.map(_.address))
-    case Event(MemberUp(member), seeds) =>
+    case Event(MemberUp(member), seeds) ⇒
       seedList ! SeedListActor.MemberAdded(member.address.toString)
       stay().using(seeds + member.address)
-    case Event(MemberExited(member), seeds) =>
+    case Event(MemberExited(member), seeds) ⇒
       seedList ! SeedListActor.MemberRemoved(member.address.toString)
       stay().using(seeds - member.address)
-    case Event(MemberRemoved(member, _), seeds) =>
+    case Event(MemberRemoved(member, _), seeds) ⇒
       if (seeds.contains(member.address))
         seedList ! SeedListActor.MemberRemoved(member.address.toString)
       stay().using(seeds - member.address)
@@ -106,29 +106,29 @@ class ClusterDiscoveryActor(
       sorted = false))
 
   onTransition {
-    case _ -> Follower =>
+    case (_, Follower) ⇒
       setTimer("reelection", RetryElection, settings.seedsWaitTimeout, false)
       fetchSeeds()
   }
 
   when(Follower) {
-    case Event(EtcdResponse("get", EtcdNode(_, _, _, _, _, Some(true), Some(nodes)), _), _) =>
+    case Event(EtcdResponse("get", EtcdNode(_, _, _, _, _, Some(true), Some(nodes)), _), _) ⇒
       val seeds = nodes.flatMap(_.value).map(AddressFromURIString(_))
       cluster.joinSeedNodes(seeds)
       cancelTimer("reelection")
       stay()
-    case Event(EtcdError(EtcdError.KeyNotFound, _, _, _), _) =>
+    case Event(EtcdError(EtcdError.KeyNotFound, _, _, _), _) ⇒
       setTimer("retry", Retry, settings.etcdRetryDelay, false)
       stay()
-    case Event(Retry, _) =>
+    case Event(Retry, _) ⇒
       fetchSeeds()
       stay()
-    case Event(RetryElection, _) =>
+    case Event(RetryElection, _) ⇒
       goto(Election)
   }
 
   whenUnhandled {
-    case Event(msg, _) =>
+    case Event(msg, _) ⇒
       log.warning(s"unhandled message $msg")
       stay()
   }

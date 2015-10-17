@@ -21,8 +21,8 @@ object EtcdJsonProtocol extends DefaultJsonProtocol {
       JsString(formatter.format(i))
 
     def read(value: JsValue) = value match {
-      case JsString(s) => ZonedDateTime.from(formatter.parse(s))
-      case _ => deserializationError("string expected")
+      case JsString(s) ⇒ ZonedDateTime.from(formatter.parse(s))
+      case _ ⇒ deserializationError("string expected")
     }
   }
 

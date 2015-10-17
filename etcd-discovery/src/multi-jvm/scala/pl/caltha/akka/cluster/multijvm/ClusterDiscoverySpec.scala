@@ -14,6 +14,6 @@ trait ClusterDiscoverySpec extends MultiNodeSpecCallbacks with FlatSpecLike with
   override def beforeAll() = multiNodeSpecBeforeAll()
 
   override def afterAll() = multiNodeSpecAfterAll()
-  
+
   override def initialParticipants = roles.size
 }
