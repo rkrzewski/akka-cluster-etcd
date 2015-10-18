@@ -11,7 +11,7 @@ import akka.pattern.pipe
 
 /**
  * This actor will attempt the specified `operation` up to `retries` number of times, sends the
- * result back to it parent actor and subsequently terminates.
+ * result back designated receiver actor and subsequently terminates.
  *
  * @param operation the operation that will be performed
  * @param replyTo the actor that will be informed about the outcome of the operation
@@ -32,13 +32,10 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], replyTo
 
   implicit val executionContext = context.system.dispatcher
 
-  /**
-   * Handle the responses, starting with maximum allowed reply count.
-   */
   val receive = attempt(1)
 
   /**
-   * Handle the incoming events.
+   * Execute n-th attempt of the operation.
    */
   def attempt(num: Int): Receive = {
 
@@ -67,7 +64,7 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], replyTo
   }
 
   /**
-   * Send the message back to the Actor's parent and terminate.
+   * Send the message designated receiver and terminate.
    */
   def reply(message: Any) = {
     replyTo ! message
