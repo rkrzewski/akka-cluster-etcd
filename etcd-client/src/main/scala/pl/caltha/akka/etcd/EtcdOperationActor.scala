@@ -97,7 +97,7 @@ object EtcdOperationActor {
    */
   def props(replyTo: ActorRef, etcd: EtcdClient, returnErrors: Traversable[Int],
     retryDelay: FiniteDuration, retries: Int)(operation: EtcdClient ⇒ Future[EtcdResponse]) =
-    Props(classOf[EtcdOperationActor], operation, replyTo, etcd, returnErrors, retries)
+    Props(classOf[EtcdOperationActor], operation, replyTo, etcd, returnErrors, retryDelay, retries)
 
   /** Message sent to self after retryDelay time elapses */
   private[EtcdOperationActor] object Retry
