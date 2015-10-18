@@ -16,6 +16,7 @@ lazy val client = project.
     settings(commonSettings ++ Seq(
         name := "etcd-client",
         libraryDependencies ++= Seq(
+            "com.typesafe.akka" %% "akka-actor" % akkaVersion,
             "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamsVersion,
             "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamsVersion,
             "com.typesafe.akka" %% "akka-stream-testkit-experimental" % akkaStreamsVersion % "test",
