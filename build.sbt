@@ -17,10 +17,12 @@ lazy val client = project.
         name := "etcd-client",
         libraryDependencies ++= Seq(
             "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+            "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
             "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamsVersion,
             "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamsVersion,
             "com.typesafe.akka" %% "akka-stream-testkit-experimental" % akkaStreamsVersion % "test",
-            "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+            "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
+            "org.mockito" % "mockito-core" % mocitoVersion % "test"
         )
     ))
 
