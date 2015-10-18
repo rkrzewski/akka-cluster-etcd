@@ -2,9 +2,11 @@ package pl.caltha.akka.etcd
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
+
 import akka.actor.Actor
-import akka.pattern.pipe
 import akka.actor.Props
+import akka.actor.Status
+import akka.pattern.pipe
 
 /**
  * This actor will attempt the specified `operation` up to `retries` number of times, sends the
@@ -50,20 +52,22 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], etcd: E
       case error @ EtcdError(code, _, _, _) if returnErrors.exists(code == _) ⇒
         reply(error)
       /* a timeout or unexpected error occurred, but more retries are allowed */
-      case _ if retries < 0 || num <= retries ⇒
+      case EtcdError(_, _, _, _) | Status.Failure(_) if retries < 0 || num <= retries ⇒
         context.system.scheduler.scheduleOnce(retryDelay, self, Retry)
       case Retry ⇒
         context.become(attempt(num + 1))
       /* timeout attempts exhausted */
-      case resp: EtcdMessage ⇒
-        reply(resp)
+      case error @ EtcdError(_, _, _, _) ⇒
+        reply(error)
+      case failure @ Status.Failure(_) ⇒
+        reply(failure)
     }
   }
 
   /**
    * Send the message back to the Actor's parent and terminate.
    */
-  def reply(message: EtcdMessage) = {
+  def reply(message: Any) = {
     context.parent ! message
     context.stop(self)
   }
