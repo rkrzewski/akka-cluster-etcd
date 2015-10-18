@@ -4,6 +4,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
 import akka.actor.Actor
+import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.Status
 import akka.pattern.pipe
@@ -12,8 +13,9 @@ import akka.pattern.pipe
  * This actor will attempt the specified `operation` up to `retries` number of times, sends the
  * result back to it parent actor and subsequently terminates.
  *
- * @param etcd the EtcdClient instance to use
  * @param operation the operation that will be performed
+ * @param replyTo the actor that will be informed about the outcome of the operation
+ * @param etcd the EtcdClient instance to use
  * @param returnErrors if the operation yields an error response with `errorCode` in this list,
  *        the operation will not be retried, but `EtcdError` will be sent back immediately (this is useful
  *        for compare-and-swap type operations)
@@ -23,7 +25,7 @@ import akka.pattern.pipe
  *        unsuccessful operation will be sent back. When negative argument is used, retries will be occur
  *        indefinitely.
  */
-class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], etcd: EtcdClient,
+class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], replyTo: ActorRef, etcd: EtcdClient,
     returnErrors: Traversable[Int], retryDelay: FiniteDuration, retries: Int) extends Actor {
 
   import EtcdOperationActor._
@@ -68,7 +70,7 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], etcd: E
    * Send the message back to the Actor's parent and terminate.
    */
   def reply(message: Any) = {
-    context.parent ! message
+    replyTo ! message
     context.stop(self)
   }
 }
@@ -81,6 +83,7 @@ object EtcdOperationActor {
   /**
    * Create `akka.actor.Props` needed to instantiate `EtcdOperationActor`
    *
+   * @param replyTo the actor that will be informed about the outcome of the operation
    * @param etcd the EtcdClient instance to use
    * @param returnErrors if the operation yields an error response with `errorCode` in this list,
    *        the operation will not be retried, but `EtcdError` will be sent back immediately (this is useful
@@ -92,9 +95,9 @@ object EtcdOperationActor {
    *        indefinitely.
    * @param operation the operation that will be performed
    */
-  def props(etcd: EtcdClient, returnErrors: Traversable[Int], retryDelay: FiniteDuration,
-    retries: Int)(operation: EtcdClient ⇒ Future[EtcdResponse]) =
-    Props(classOf[EtcdOperationActor], operation, etcd, returnErrors, retries)
+  def props(replyTo: ActorRef, etcd: EtcdClient, returnErrors: Traversable[Int],
+    retryDelay: FiniteDuration, retries: Int)(operation: EtcdClient ⇒ Future[EtcdResponse]) =
+    Props(classOf[EtcdOperationActor], operation, replyTo, etcd, returnErrors, retries)
 
   /** Message sent to self after retryDelay time elapses */
   private[EtcdOperationActor] object Retry
