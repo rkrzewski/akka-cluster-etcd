@@ -18,7 +18,8 @@ import akka.actor.Props
  * @param retryDelay the time to wait before retrying the operation
  * @param retries if the operation results `EtcdError` (except those in `returnErrors`) or timeout it
  *        will be retried up to `retries` number of times. When retries are exhausted, the result of last
- *        unsuccessful operation will be sent back.
+ *        unsuccessful operation will be sent back. When negative argument is used, retries will be occur
+ *        indefinitely.
  */
 class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], etcd: EtcdClient,
     returnErrors: Traversable[Int], retryDelay: FiniteDuration, retries: Int) extends Actor {
@@ -30,12 +31,12 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], etcd: E
   /**
    * Handle the responses, starting with maximum allowed reply count.
    */
-  val receive = attempt(retries)
+  val receive = attempt(1)
 
   /**
    * Handle the incoming events.
    */
-  def attempt(remaining: Int): Receive = {
+  def attempt(num: Int): Receive = {
 
     // Send the request to `etcd` server and schedule a timeout event.
     operation(etcd).recover {
@@ -49,10 +50,10 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], etcd: E
       case error @ EtcdError(code, _, _, _) if returnErrors.exists(code == _) ⇒
         reply(error)
       /* a timeout or unexpected error occurred, but more retries are allowed */
-      case _ if remaining > 0 ⇒
+      case _ if retries < 0 || num <= retries ⇒
         context.system.scheduler.scheduleOnce(retryDelay, self, Retry)
       case Retry ⇒
-        context.become(attempt(remaining - 1))
+        context.become(attempt(num + 1))
       /* timeout attempts exhausted */
       case resp: EtcdMessage ⇒
         reply(resp)
@@ -83,7 +84,8 @@ object EtcdOperationActor {
    * @param retryDelay the time to wait before retrying the operation
    * @param retries if the operation results `EtcdError` (except those in `returnErrors`) or timeout it
    *        will be retried up to `retries` number of times. When retries are exhausted, the result of last
-   *        unsuccessful operation will be sent back.
+   *        unsuccessful operation will be sent back. When negative argument is used, retries will be occur
+   *        indefinitely.
    * @param operation the operation that will be performed
    */
   def props(etcd: EtcdClient, returnErrors: Traversable[Int], retryDelay: FiniteDuration,
