@@ -81,7 +81,7 @@ class LeaderEntryActor(
       goto(Idle).using(Data(assumeEntryExists)).forMax(settings.etcdRetryDelay)
     // network errors
     case Event(Status.Failure(t), Data(assumeEntryExists)) ⇒
-      log.error("etcd error", t)
+      log.error(t, "etcd error")
       goto(Idle).using(Data(assumeEntryExists)).forMax(settings.etcdRetryDelay)
   }
 
