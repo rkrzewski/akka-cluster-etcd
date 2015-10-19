@@ -14,8 +14,10 @@ import scala.concurrent.duration.Duration
  * @param etcdConnectionTimeout Timeout for connecting to `etcd`.
  * @param etcdRequestTimeout Timeout for HTTP requests to `etcd` server.
  * @param etcdRetryDelay Time to wait before retrying failed `etcd` operations.
- * @param seedsWaitTimeout Timeout for waiting for seed nodes to be published after losing leader election.
- * 				Election will be retired after this time passes.
+ * @param seedsFetchTimeout Timeout for waiting for seed nodes to be published after losing leader election.
+ *         Election will be retired after this time passes.
+ * @param seedsJoinTimeout Timeout for attempting to join the cluster using seed node addresses fetched from
+ *         etcd. If none of the seeds can be contacted during specified time, election will be retried.
  * @param leaderEntryTTL TTL for leader entry in `etcd`. Leader will attempt to refresh twice during that period.
  */
 case class ClusterDiscoverySettings(
@@ -25,7 +27,8 @@ case class ClusterDiscoverySettings(
     etcdConnectionTimeout: FiniteDuration,
     etcdRequestTimeout: FiniteDuration,
     etcdRetryDelay: FiniteDuration,
-    seedsWaitTimeout: FiniteDuration,
+    seedsFetchTimeout: FiniteDuration,
+    seedsJoinTimeout: FiniteDuration,
     leaderEntryTTL: FiniteDuration) {
 
   import ClusterDiscoverySettings._
@@ -67,7 +70,8 @@ object ClusterDiscoverySettings {
       duration("etcdConnection"),
       duration("etcdRequest"),
       duration("etcdRetry"),
-      duration("seedsWait"),
+      duration("seedsFetch"),
+      duration("seedsJoin"),
       duration("leaderEntry"))
   }
 

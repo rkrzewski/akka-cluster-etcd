@@ -56,6 +56,7 @@ class ClusterDiscoveryActor(
 
   onTransition {
     case (_, Election) ⇒
+      log.info("starting election")
       etcd(_.compareAndSet(
         key = settings.leaderPath,
         value = cluster.selfAddress.toString,
@@ -110,7 +111,7 @@ class ClusterDiscoveryActor(
     case (_, Follower) ⇒
       log.info("assuming Follower role")
       cluster.subscribe(self, initialStateMode = InitialStateAsSnapshot, classOf[MemberEvent])
-      setTimer("reelection", RetryElection, settings.seedsWaitTimeout, false)
+      setTimer("seedsFetch", SeedsFetchTimeout, settings.seedsFetchTimeout, false)
       fetchSeeds()
   }
 
@@ -118,7 +119,8 @@ class ClusterDiscoveryActor(
     case Event(EtcdResponse("get", EtcdNode(_, _, _, _, _, Some(true), Some(nodes)), _), _) ⇒
       val seeds = nodes.flatMap(_.value).map(AddressFromURIString(_))
       cluster.joinSeedNodes(seeds)
-      cancelTimer("reelection")
+      cancelTimer("seedsFetch")
+      setTimer("seedsJoin", JoinTimeout, settings.seedsJoinTimeout, false)
       stay()
     case Event(EtcdError(EtcdError.KeyNotFound, _, _, _), _) ⇒
       setTimer("retry", Retry, settings.etcdRetryDelay, false)
@@ -126,7 +128,11 @@ class ClusterDiscoveryActor(
     case Event(Retry, _) ⇒
       fetchSeeds()
       stay()
-    case Event(RetryElection, _) ⇒
+    case Event(SeedsFetchTimeout, _) ⇒
+      log.info(s"failed to fetch seed node information in ${settings.seedsFetchTimeout.toMillis} ms")
+      goto(Election)
+    case Event(JoinTimeout, _) ⇒
+      log.info(s"seed nodes failet do respond in ${settings.seedsJoinTimeout.toMillis} ms")
       goto(Election)
     case Event(LeaderChanged(Some(address)), _) if address == cluster.selfAddress ⇒
       goto(Leader)
@@ -171,6 +177,7 @@ object ClusterDiscoveryActor {
    */
   case object Start
   case object Retry
-  case object RetryElection
+  private case object SeedsFetchTimeout
+  private case object JoinTimeout
 
 }
