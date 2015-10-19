@@ -47,6 +47,6 @@ abstract class EtcdFSMSpecBase[State, Data](_system: ActorSystem)
   }
 
   override def afterAll {
-    system.shutdown()
+    TestKit.shutdownActorSystem(system)
   }
 }
