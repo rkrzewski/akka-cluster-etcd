@@ -2,8 +2,8 @@ package pl.caltha.akka.cluster
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-
 import org.mockito.Mockito
+
 import org.scalatest.Finders
 import org.scalatest.FlatSpecLike
 import org.scalatest.Matchers
@@ -16,6 +16,7 @@ import akka.actor.FSM.SubscribeTransitionCallBack
 import akka.actor.FSM.Transition
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
+import akka.stream.StreamTcpException
 import akka.testkit.TestFSMRef
 import akka.testkit.TestKit
 import akka.testkit.TestProbe
@@ -73,9 +74,12 @@ class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.St
         EtcdNode(settings.etcdPath, 0, 0, None, None, Some(true), Some(List.empty)),
         None))
 
-    val elecctionBidFailureResp = Future.failed(
+    val eleectionBidFailureResp = Future.failed(
       EtcdException(
         EtcdError(EtcdError.NodeExist, "Node Exists", settings.leaderPath, 100)))
+
+    val electionBidTransientFailureResp = Future.failed(
+      new StreamTcpException("Connection failed"))
 
     def fetchSeedsReq =
       etcd.get(settings.seedsPath, true)
@@ -108,7 +112,7 @@ class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.St
 
   it should "transition to Follower role after losing election" in new Fixture {
     when(initReq).thenReturn(initSuccessResp)
-    when(electionBidReq).thenReturn(elecctionBidFailureResp)
+    when(electionBidReq).thenReturn(eleectionBidFailureResp)
     when(fetchSeedsReq).thenReturn(noSeedsResp)
     val discovery = init()
     discovery ! Start
@@ -118,13 +122,23 @@ class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.St
 
   it should "tranistion to Leader role from Follower role when pevious leader leaves the cluster" in new Fixture {
     when(initReq).thenReturn(initSuccessResp)
-    when(electionBidReq).thenReturn(elecctionBidFailureResp)
+    when(electionBidReq).thenReturn(eleectionBidFailureResp)
     when(fetchSeedsReq).thenReturn(noSeedsResp)
     val discovery = init()
     discovery ! Start
     expectTransitionTo(Election)
     expectTransitionTo(Follower)
     discovery ! LeaderChanged(Some(selfAddress))
+    expectTransitionTo(Leader)
+  }
+
+  it should "retry election on transient errors" in new Fixture {
+    when(initReq).thenReturn(initSuccessResp)
+    when(electionBidReq).thenReturn(electionBidTransientFailureResp).thenReturn(electionBidSuccessResp)
+    when(fetchSeedsReq).thenReturn(noSeedsResp)
+    val discovery = init(settings.copy(etcdRetryDelay = 100.milliseconds))
+    discovery ! Start
+    expectTransitionTo(Election)
     expectTransitionTo(Leader)
   }
 }

@@ -7,7 +7,7 @@ import akka.actor.Address
 import akka.actor.AddressFromURIString
 import akka.actor.LoggingFSM
 import akka.actor.Props
-import akka.actor.actorRef2Scala
+import akka.actor.Status
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.InitialStateAsSnapshot
 import akka.cluster.ClusterEvent.MemberEvent
@@ -54,16 +54,19 @@ class ClusterDiscoveryActor(
       goto(Election)
   }
 
+  def electionBid() =
+    etcd(_.compareAndSet(
+      key = settings.leaderPath,
+      value = cluster.selfAddress.toString,
+      ttl = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
+      prevValue = None,
+      prevIndex = None,
+      prevExist = Some(false)))
+
   onTransition {
     case (_, Election) ⇒
       log.info("starting election")
-      etcd(_.compareAndSet(
-        key = settings.leaderPath,
-        value = cluster.selfAddress.toString,
-        ttl = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
-        prevValue = None,
-        prevIndex = None,
-        prevExist = Some(false)))
+      electionBid()
   }
 
   when(Election) {
@@ -73,6 +76,15 @@ class ClusterDiscoveryActor(
       goto(Follower)
     case Event(err @ EtcdError, _) ⇒
       log.error(s"Election error: $err")
+      setTimer("retry", Retry, settings.etcdRetryDelay, false)
+      stay()
+    case Event(Status.Failure(t), _) ⇒
+      log.error(t, "Election error")
+      setTimer("retry", Retry, settings.etcdRetryDelay, false)
+      stay()
+    case Event(Retry, _) ⇒
+      log.warning("retrying")
+      electionBid()
       stay()
   }
 
