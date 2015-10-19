@@ -15,6 +15,7 @@ import akka.actor.FSM.CurrentState
 import akka.actor.FSM.SubscribeTransitionCallBack
 import akka.actor.FSM.Transition
 import akka.cluster.Cluster
+import akka.cluster.ClusterEvent._
 import akka.testkit.TestFSMRef
 import akka.testkit.TestKit
 import akka.testkit.TestProbe
@@ -72,6 +73,10 @@ class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.St
         EtcdNode(settings.etcdPath, 0, 0, None, None, Some(true), Some(List.empty)),
         None))
 
+    val elecctionBidFailureResp = Future.failed(
+      EtcdException(
+        EtcdError(EtcdError.NodeExist, "Node Exists", settings.leaderPath, 100)))
+
     def fetchSeedsReq =
       etcd.get(settings.seedsPath, true)
 
@@ -98,6 +103,28 @@ class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.St
     val discovery = init()
     discovery ! Start
     expectTransitionTo(Election)
+    expectTransitionTo(Leader)
+  }
+
+  it should "transition to Follower role after losing election" in new Fixture {
+    when(initReq).thenReturn(initSuccessResp)
+    when(electionBidReq).thenReturn(elecctionBidFailureResp)
+    when(fetchSeedsReq).thenReturn(noSeedsResp)
+    val discovery = init()
+    discovery ! Start
+    expectTransitionTo(Election)
+    expectTransitionTo(Follower)
+  }
+
+  it should "tranistion to Leader role from Follower role when pevious leader leaves the cluster" in new Fixture {
+    when(initReq).thenReturn(initSuccessResp)
+    when(electionBidReq).thenReturn(elecctionBidFailureResp)
+    when(fetchSeedsReq).thenReturn(noSeedsResp)
+    val discovery = init()
+    discovery ! Start
+    expectTransitionTo(Election)
+    expectTransitionTo(Follower)
+    discovery ! LeaderChanged(Some(selfAddress))
     expectTransitionTo(Leader)
   }
 }

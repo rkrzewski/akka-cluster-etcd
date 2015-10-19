@@ -21,7 +21,7 @@ import pl.caltha.akka.etcd.EtcdError
 import pl.caltha.akka.etcd.EtcdException
 import pl.caltha.akka.etcd.EtcdNode
 import pl.caltha.akka.etcd.EtcdResponse
-import akka.cluster.ClusterEvent.CurrentClusterState
+import akka.cluster.ClusterEvent._
 
 class ClusterDiscoveryActor(
     etcdClient: EtcdClient,
@@ -78,6 +78,7 @@ class ClusterDiscoveryActor(
   onTransition {
     case (_, Leader) ⇒
       // bootstrap the cluster
+      log.info("assuming Leader role")
       cluster.join(cluster.selfAddress)
       cluster.subscribe(self, initialStateMode = InitialStateAsSnapshot, classOf[MemberEvent])
       context.actorOf(LeaderEntryActor.props(cluster.selfAddress.toString, etcdClient, settings))
@@ -107,6 +108,8 @@ class ClusterDiscoveryActor(
 
   onTransition {
     case (_, Follower) ⇒
+      log.info("assuming Follower role")
+      cluster.subscribe(self, initialStateMode = InitialStateAsSnapshot, classOf[MemberEvent])
       setTimer("reelection", RetryElection, settings.seedsWaitTimeout, false)
       fetchSeeds()
   }
@@ -125,6 +128,13 @@ class ClusterDiscoveryActor(
       stay()
     case Event(RetryElection, _) ⇒
       goto(Election)
+    case Event(LeaderChanged(Some(address)), _) if address == cluster.selfAddress ⇒
+      goto(Leader)
+    case Event(LeaderChanged(optAddress), _) ⇒
+      log.info(s"seen leader change to $optAddress")
+      stay()
+    case Event(_: ClusterDomainEvent, _) ⇒
+      stay()
   }
 
   whenUnhandled {

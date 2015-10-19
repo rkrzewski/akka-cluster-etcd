@@ -22,6 +22,7 @@ final case class PrimarySeedElectionMultiNodeConfig() extends MultiNodeConfig {
   commonConfig(ConfigFactory.parseString(s"""
     |akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
     |akka.cluster.discovery.etcd.timeouts.etcdRetry = 500 ms
+    |akka.loglevel = INFO
    """.stripMargin))
 }
 
