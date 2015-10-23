@@ -60,3 +60,19 @@ lazy val discovery = project.
 	    }
 	)).
 	configs(MultiJvm)
+
+lazy val clusterMonitor = project.
+    in(file("examples/cluster-monitor")).
+    dependsOn(discovery).
+    settings(commonSettings ++ Seq(
+            name := "cluster-monitor",
+            mainClass in Compile := Some("akka.Main"),
+            javaOptions in Universal ++= Seq(
+                "pl.caltha.akka.cluster.monitor.Main"
+            ),
+            dockerBaseImage := "java:8-jre",
+            packageName in Docker := "caltha/akka-cluster-etcd/monitor",
+            version in Docker := "latest"
+        )
+    ).
+    enablePlugins(JavaAppPackaging, DockerPlugin)
