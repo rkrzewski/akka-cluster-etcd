@@ -10,7 +10,7 @@ Prerequisites
 
    * [Docker](https://docs.docker.com/installation/)
    * [Docker Compose](https://docs.docker.com/compose/install/)
-   * [Cluster monitor image](../README.md) built and published to local Docker
+   * [Cluster monitor image](../cluster-monitor/README.md) built and published to local Docker
      repository
 
 Running the example
