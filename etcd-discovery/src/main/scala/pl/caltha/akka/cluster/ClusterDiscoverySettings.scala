@@ -43,12 +43,12 @@ case class ClusterDiscoverySettings(
 object ClusterDiscoverySettings {
 
   /**
-   * Path, relative to [[etcdPath]], where seed leader election takes place
+   * Path, relative to `etcdPath`, where seed leader election takes place
    */
   val LeaderPath = "/leader"
 
   /**
-   * Path, relative to [[etcdPath]], where seed nodes information is stored
+   * Path, relative to `etcdPath`, where seed nodes information is stored
    */
   val SeedsPath = "/seeds"
 
