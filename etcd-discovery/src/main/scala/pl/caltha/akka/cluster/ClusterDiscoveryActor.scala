@@ -151,8 +151,13 @@ class ClusterDiscoveryActor(
     case Event(LeaderChanged(optAddress), _) ⇒
       log.info(s"seen leader change to $optAddress")
       stay()
-    case Event(_: ClusterDomainEvent, _) ⇒
+    case Event(CurrentClusterState(_, _, _, _, _), _) ⇒
+      log.info("joined the cluster")
+      cancelTimer("seedsFetch")
+      cancelTimer("seedsJoin")
       stay()
+    case Event(_: ClusterDomainEvent, _) ⇒
+      stay()      
   }
 
   whenUnhandled {
