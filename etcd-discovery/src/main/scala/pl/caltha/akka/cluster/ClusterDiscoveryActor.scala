@@ -144,7 +144,7 @@ class ClusterDiscoveryActor(
       log.info(s"failed to fetch seed node information in ${settings.seedsFetchTimeout.toMillis} ms")
       goto(Election)
     case Event(JoinTimeout, _) ⇒
-      log.info(s"seed nodes failet do respond in ${settings.seedsJoinTimeout.toMillis} ms")
+      log.info(s"seed nodes failed to respond in ${settings.seedsJoinTimeout.toMillis} ms")
       goto(Election)
     case Event(LeaderChanged(Some(address)), _) if address == cluster.selfAddress ⇒
       goto(Leader)
