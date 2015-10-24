@@ -32,5 +32,5 @@ seed nodes afterward. This enables a zero-configuration deployment scenario for 
 * [Cluster Monitor] – a minimal demo application that boots an empty Akka cluster and stays idle until VM is terminated
 * [Docker Compose] – Cluster Monitor running inside Docker Compose containers
 
-[Cluster Monitor]: https://github.com/rkrzewski/akka-cluster-etcd/tree/master/examples/cluster-monitor
-[Docker Compose]: https://github.com/rkrzewski/akka-cluster-etcd/tree/master/examples/docker-compose
+[Cluster Monitor]: examples/cluster-monitor
+[Docker Compose]: examples/docker-compose
