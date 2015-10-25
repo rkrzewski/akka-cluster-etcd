@@ -6,6 +6,8 @@ import akka.actor.Cancellable
 import akka.stream.scaladsl.Flow
 import akka.stream.stage.{AsyncCallback, AsyncContext, AsyncStage}
 
+import scala.concurrent.{ExecutionContext, Promise}
+
 /**
  * Flow element with a materialized value of type `Cancellable` that allows
  * cancelling upstream and completing downstream flow on demand.
@@ -19,16 +21,23 @@ object FlowBreaker {
   sealed trait Event
   case object CancelEvent extends Event
 
-  class FlowBreakerCancellable extends Cancellable {
+  private object SameThreadExecutionContext extends ExecutionContext {
+    override def execute(runnable: Runnable) = runnable.run()
+    override def reportFailure(cause: Throwable) =
+      throw new IllegalStateException("exception in SameThreadExecutionContext", cause)
+  }
 
-    private var callback: AsyncCallback[FlowBreaker.Event] = _
+  private class FlowBreakerCancellable extends Cancellable {
+
+    private val callbackPromise: Promise[AsyncCallback[FlowBreaker.Event]] = Promise()
+
     private val cancelled = new AtomicBoolean(false)
 
-    def registerWith(callback: AsyncCallback[FlowBreaker.Event]) = this.callback = callback
+    def registerWith(callback: AsyncCallback[FlowBreaker.Event]) = callbackPromise.success(callback)
 
     override def cancel() = {
       val cancelling = cancelled.compareAndSet(false, true)
-      if (cancelling) callback.invoke(CancelEvent)
+      if (cancelling) callbackPromise.future.map {_.invoke(CancelEvent)}(SameThreadExecutionContext)
       cancelling
     }
 
@@ -36,7 +45,7 @@ object FlowBreaker {
   }
 
 
-  class FlowBreakerStage[Elem](cancellable: FlowBreakerCancellable)
+  private class FlowBreakerStage[Elem](cancellable: FlowBreakerCancellable)
     extends AsyncStage[Elem, Elem, Event] {
 
     private var inFlight: Option[Elem] = None
