@@ -3,7 +3,15 @@ etcd:
   command: >
     -listen-client-urls http://0.0.0.0:2379
     -advertise-client-urls http://etcd:2379
-monitor:
+frontend:
   image: caltha/akka-cluster-etcd/monitor:latest
+  environment:
+    - CLUSTER_ROLE=frontend
+  links:
+    - "etcd:etcd"
+backend:
+  image: caltha/akka-cluster-etcd/monitor:latest
+  environment:
+    - CLUSTER_ROLE=backend
   links:
     - "etcd:etcd"
