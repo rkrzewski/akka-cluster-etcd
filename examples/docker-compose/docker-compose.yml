@@ -9,6 +9,8 @@ frontend:
     - CLUSTER_ROLE=frontend
   links:
     - "etcd:etcd"
+  ports:
+    - "8080:8080"
 backend:
   image: caltha/akka-cluster-etcd/monitor:latest
   environment:
