@@ -9,7 +9,7 @@ import akka.actor.Props
 class ClusterEventPublisher(maxBufferSize: Int) extends ActorPublisher[ClusterDomainEvent] {
   import ActorPublisherMessage._
 
-  Cluster(context.system).subscribe(self, InitialStateAsSnapshot, classOf[MemberEvent],
+  Cluster(context.system).subscribe(self, InitialStateAsEvents, classOf[MemberEvent],
     classOf[ReachabilityEvent], classOf[LeaderChanged], classOf[RoleLeaderChanged])
 
   var buf = Vector.empty[ClusterDomainEvent]
