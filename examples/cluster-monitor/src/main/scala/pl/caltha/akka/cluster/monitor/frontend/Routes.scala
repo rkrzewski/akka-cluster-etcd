@@ -1,21 +1,29 @@
-package pl.caltha.akka.cluster.monitor
+package pl.caltha.akka.cluster.monitor.frontend
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.cluster.ClusterEvent.ClusterDomainEvent
+import akka.http.scaladsl.marshalling.ToResponseMarshallable.apply
+import akka.http.scaladsl.model.HttpEntity.apply
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCode.int2StatusCode
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.model.ws.TextMessage
 import akka.http.scaladsl.model.ws.UpgradeToWebsocket
+import akka.http.scaladsl.server.Directive.addByNameNullaryApply
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+
 import spray.json._
+
+import pl.caltha.akka.cluster.monitor.ShutdownCommand
 
 trait Routes {
 
@@ -51,7 +59,7 @@ trait Routes {
     }
   }
 
-  def routes = path("health") {
+  def routes: Route = path("health") {
     get {
       complete {
         "OK"

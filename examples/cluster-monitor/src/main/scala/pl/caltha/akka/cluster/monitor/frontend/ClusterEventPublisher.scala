@@ -1,10 +1,15 @@
-package pl.caltha.akka.cluster.monitor
+package pl.caltha.akka.cluster.monitor.frontend
 
 import scala.annotation.tailrec
+
+import akka.actor.Props
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
+import akka.cluster.ClusterEvent.LeaderChanged
+import akka.cluster.ClusterEvent.MemberEvent
+import akka.cluster.ClusterEvent.ReachabilityEvent
+import akka.cluster.ClusterEvent.RoleLeaderChanged
 import akka.stream.actor._
-import akka.actor.Props
 
 class ClusterEventPublisher(maxBufferSize: Int) extends ActorPublisher[ClusterDomainEvent] {
   import ActorPublisherMessage._

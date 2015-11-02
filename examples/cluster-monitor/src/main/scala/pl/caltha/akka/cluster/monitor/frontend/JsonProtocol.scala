@@ -1,7 +1,6 @@
-package pl.caltha.akka.cluster.monitor
+package pl.caltha.akka.cluster.monitor.frontend
 
 import java.net.MalformedURLException
-
 import akka.actor.Address
 import akka.actor.AddressFromURIString
 import akka.cluster.ClusterEvent._
@@ -11,6 +10,8 @@ import akka.cluster.UniqueAddress
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
+
+import pl.caltha.akka.cluster.monitor.ShutdownCommand
 
 object JsonProtocol extends DefaultJsonProtocol {
 
