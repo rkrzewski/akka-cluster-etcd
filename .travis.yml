@@ -8,6 +8,9 @@ sudo: required
 services:
   - docker
 
+install:
+  - gem install sass -v 3.4.0 
+
 before_script:
   - docker run -d --net host quay.io/coreos/etcd:v2.2.0
 
