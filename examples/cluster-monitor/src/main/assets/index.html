@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<script>
+			// necessary for development mode
+			require = {
+				paths : {
+					"angular" : "lib/angularjs/angular",
+					"angular-aria" : "lib/angularjs/angular-aria",
+					"angular-animate" : "lib/angularjs/angular-animate",
+					"angular-material" : "lib/angular-material/angular-material",
+				},
+				shim : {
+					angular : {
+						exports : "angular"
+					},
+					"angular-aria" : {
+						deps : [ "angular" ]
+					},
+					"angular-animate" : {
+						deps : [ "angular"]
+					},
+					"angular-material" : {
+						deps : [ "angular", "angular-aria", "angular-animate" ]
+					}
+				}
+			};
+		</script>
+		<script src="lib/requirejs/require.min.js" data-main="main.js"></script>
+		<link rel="stylesheet" href="main.css" />
+	</head>
+	<body>hello there</body>
+</html>

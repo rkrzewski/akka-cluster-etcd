@@ -72,7 +72,47 @@ lazy val clusterMonitor = project.
             ),
             dockerBaseImage := "java:8-jre",
             packageName in Docker := "caltha/akka-cluster-etcd/monitor",
-            version in Docker := "latest"
+            version in Docker := "latest",
+            // frontend
+            WebKeys.packagePrefix in Assets := "public/",
+            (managedClasspath in Runtime) += (packageBin in Assets).value,
+            (managedClasspath in Test) += (packageBin in Assets).value,
+            libraryDependencies ++= Seq(
+                "org.webjars" % "requirejs" % "2.1.20",
+                "org.webjars" % "angularjs" % "1.4.7",
+                "org.webjars.npm" % "angular-material" % "0.11.4",
+                "org.webjars.bower" % "roboto-fontface" % "0.4.3",
+                "org.webjars.bower" % "material-design-iconic-font" % "2.1.1"
+            ),
+            // pipelineStages := Seq(rjs, digest, gzip),
+            RjsKeys.webJarCdns := Map.empty,
+            RjsKeys.buildProfile := WebJs.JS.Object(
+                "skipDirOptimize" -> true,
+                "paths" -> WebJs.JS.Object(
+                    "angular" -> "lib/angularjs/angular",
+                    "angular-animate" -> "lib/angularjs/angular-animate",
+                    "angular-aria" -> "lib/angularjs/angular-aria",
+                    "angular-material" -> "lib/angular-material/angular-material"
+                ),
+                "shim" -> WebJs.JS.Object(
+                    "angular" -> WebJs.JS.Object(
+                        "exports" -> "angular"
+                    ),
+                    "angular-material" -> WebJs.JS.Object(
+                        "deps" -> WebJs.JS.Array(
+                            "angular",
+                            "angular-animate",
+                            "angular-aria"
+                        )
+                    ),
+                    "angular-ui-router" -> WebJs.JS.Object(
+                        "deps" -> WebJs.JS.Array("angular")
+                    )
+                )
+            )
+        ) ++ Revolver.settings ++ Seq(
+            Revolver.reStartArgs := Seq("pl.caltha.akka.cluster.monitor.frontend.Static")
         )
     ).
-    enablePlugins(JavaAppPackaging, DockerPlugin)
+    enablePlugins(JavaAppPackaging, DockerPlugin, SbtWeb)
+
