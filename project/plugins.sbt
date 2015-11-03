@@ -2,7 +2,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.3.9")
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.0.4")
 
 resolvers += "Typesafe Bintray repository" at "http://dl.bintray.com/typesafe/maven-releases/"
-resolvers += "shaggyyeti.github.io repository" at "http://shaggyyeti.github.io/releases/"
+resolvers += Resolver.url("shaggyyeti.github.io repository", url("http://shaggyyeti.github.io/releases"))(Resolver.ivyStylePatterns)
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.2.2")
 addSbtPlugin("default" % "sbt-sass" % "0.1.9")
