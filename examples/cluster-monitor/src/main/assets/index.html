@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<meta name="viewport" content="initial-scale=1" />
 		<script>
 			// necessary for development mode
 			require = {
@@ -32,5 +32,21 @@
 		<script src="lib/requirejs/require.min.js" data-main="main.js"></script>
 		<link rel="stylesheet" href="main.css" />
 	</head>
-	<body>hello there</body>
+	<body>
+		<div ng-cloak layout="column">
+			<md-toolbar layout="row" layout-align="start center">
+				<md-progress-circular md-mode="indeterminate" class="md-accent" ng-show="!connected"></md-progress-circular>
+				<md-progress-circular md-mode="determinate" value="100" class="md-accent" ng-show="connected"></md-progress-circular>
+				<h1 flex="grow">Akka cluster monitor</h1>
+			</md-toolbar>
+			<md-content flex layout-padding>
+				<md-grid-list md-cols="8" md-row-height="1:1" md-gutter="8px">
+					<md-grid-tile ng:repeat="n in [1,2,3,4,5,6,7,8]">
+						<md-whiteframe class="md-whiteframe-1dp" layout-fill>
+						</md-whiteframe>
+					</md-grid-tile>
+				</md-grid-list>
+			</md-content>
+		</div>
+	</body>
 </html>

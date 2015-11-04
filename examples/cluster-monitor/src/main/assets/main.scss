@@ -5,3 +5,7 @@ $zmdi-font-path: "../lib/material-design-iconic-font/dist/fonts";
 @import "lib/material-design-iconic-font/scss/material-design-iconic-font.scss";
 
 @import "lib/angular-material/angular-material.scss";
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  display: none !important;
+}
