@@ -34,7 +34,7 @@
 	</head>
 	<body>
 		<div ng-cloak layout="column">
-			<md-toolbar layout="row" layout-align="start center">
+			<md-toolbar layout="row" layout-align="start center" ng-controller="ConnectionMonitor">
 				<md-progress-circular md-mode="indeterminate" class="md-accent" ng-show="!connected"></md-progress-circular>
 				<md-progress-circular md-mode="determinate" value="100" class="md-accent" ng-show="connected"></md-progress-circular>
 				<h1 flex="grow">Akka cluster monitor</h1>

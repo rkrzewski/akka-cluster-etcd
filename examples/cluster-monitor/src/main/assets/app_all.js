@@ -1,2 +1,2 @@
-define([ "./app_module" ], function() {
+define([ "./app_module", "./ws/ws_all" ], function() {
 });
