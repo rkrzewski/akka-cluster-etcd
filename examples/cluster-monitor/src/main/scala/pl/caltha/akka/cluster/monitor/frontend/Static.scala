@@ -6,6 +6,10 @@ import scala.util.Success
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
+import akka.actor.AddressFromURIString
+import akka.cluster.ClusterEvent._
+import akka.cluster.MemberFactory
+import akka.cluster.MemberStatus
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
@@ -20,6 +24,8 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.FlowGraph
+import akka.stream.scaladsl.Zip
 
 class Static extends Actor with ActorLogging {
 
@@ -45,9 +51,35 @@ class Static extends Actor with ActorLogging {
       m.dataStream.runWith(Sink.ignore)
   }).to(Sink.ignore)
 
-  // send a Tick message every 5 seconds
-  val wsSource: Source[Message, _] = Source(0.seconds, 5.seconds,
-    TextMessage.Strict("""{"event":"Tick"}"""))
+  val scenario: Seq[ClusterDomainEvent] = Seq(
+    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.3:2552", Set(), MemberStatus.up)),
+    LeaderChanged(Some(AddressFromURIString("akka.tcp://Main@172.17.0.3:2552"))),
+    RoleLeaderChanged("frontend", Some(AddressFromURIString("akka.tcp://Main@172.17.0.3:2552"))),
+    RoleLeaderChanged("backend", Some(AddressFromURIString("akka.tcp://Main@172.17.0.4:2552"))),
+    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.4:2552", Set(), MemberStatus.up)),
+    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.up)),
+    UnreachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.up)),
+    ReachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.up)),
+    UnreachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.up)),
+    MemberRemoved(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.removed), MemberStatus.down))
+
+  // send events from scenario in an infinite loop, once every 5 seconds
+  val wsSource: Source[Message, _] = Source() { implicit b ⇒
+    import FlowGraph.Implicits._
+    val events = b.add(Source.repeat(()).mapConcat(_ ⇒ scenario.to[collection.immutable.Iterable]))
+    val ticks = b.add(Source(0.seconds, 5.seconds, ()))
+    val zip = b.add(Zip[ClusterDomainEvent, Unit])
+    val evt = b.add(Flow[(ClusterDomainEvent, Unit)].map { case (e, _) ⇒ e })
+    val format = b.add(Flow[ClusterDomainEvent].map { e ⇒
+      import JsonProtocol._
+      import spray.json._
+      TextMessage.Strict(e.toJson.compactPrint)
+    })
+    events ~> zip.in0
+    ticks ~> zip.in1
+    zip.out ~> evt ~> format
+    format.outlet
+  }
 
   private def wsHandler: HttpRequest ⇒ HttpResponse = {
     case req: HttpRequest ⇒ req.header[UpgradeToWebsocket] match {
