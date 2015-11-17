@@ -1,2 +1,9 @@
 <md-whiteframe class="md-whiteframe-1dp" layout-fill>
+<div>{{cell.ip}}</div>
+<div>{{cell.status}}
+<div ng:if="cell.leader">cluster leader</div>
+<div ng:repeat="role in cell.roles">
+{{role}} <span ng:if="cell.roleLeader[role]">leader</span>
+</div>
+<div ng:if="!cell.reachable">Unreachable</div>
 </md-whiteframe>
