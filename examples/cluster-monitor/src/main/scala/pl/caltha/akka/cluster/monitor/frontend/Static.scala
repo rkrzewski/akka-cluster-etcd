@@ -52,16 +52,16 @@ class Static extends Actor with ActorLogging {
   }).to(Sink.ignore)
 
   val scenario: Seq[ClusterDomainEvent] = Seq(
-    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.3:2552", Set(), MemberStatus.up)),
+    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.3:2552", Set("frontend"), MemberStatus.up)),
     LeaderChanged(Some(AddressFromURIString("akka.tcp://Main@172.17.0.3:2552"))),
     RoleLeaderChanged("frontend", Some(AddressFromURIString("akka.tcp://Main@172.17.0.3:2552"))),
+    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.4:2552", Set("backend"), MemberStatus.up)),
     RoleLeaderChanged("backend", Some(AddressFromURIString("akka.tcp://Main@172.17.0.4:2552"))),
-    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.4:2552", Set(), MemberStatus.up)),
-    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.up)),
-    UnreachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.up)),
-    ReachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.up)),
-    UnreachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.up)),
-    MemberRemoved(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set(), MemberStatus.removed), MemberStatus.down))
+    MemberUp(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.up)),
+    UnreachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.up)),
+    ReachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.up)),
+    UnreachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.up)),
+    MemberRemoved(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.removed), MemberStatus.down))
 
   // send events from scenario in an infinite loop, once every 5 seconds
   val wsSource: Source[Message, _] = Source() { implicit b ⇒
