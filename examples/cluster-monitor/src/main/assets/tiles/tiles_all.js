@@ -1,2 +1,2 @@
-define([ "./tile" ], function() {
+define([ "./grid", "./tile" ], function() {
 });
