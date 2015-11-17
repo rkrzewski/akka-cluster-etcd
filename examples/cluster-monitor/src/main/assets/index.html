@@ -12,6 +12,7 @@
 					"angular-aria" : "lib/angularjs/angular-aria",
 					"angular-animate" : "lib/angularjs/angular-animate",
 					"angular-material" : "lib/angular-material/angular-material",
+					"lodash" : "lib/lodash/lodash"
 				},
 				shim : {
 					angular : {
@@ -25,6 +26,9 @@
 					},
 					"angular-material" : {
 						deps : [ "angular", "angular-aria", "angular-animate" ]
+					},
+					"lodash" : {
+						exports : "_"
 					}
 				}
 			};
@@ -39,10 +43,10 @@
 				<md-progress-circular md-mode="determinate" value="100" class="md-accent" ng-show="connected"></md-progress-circular>
 				<h1 flex="grow">Akka cluster monitor</h1>
 			</md-toolbar>
-			<md-content flex layout-padding>
+			<md-content flex layout-padding ng-controller="Grid as grid">
 				<md-grid-list md-cols="8" md-row-height="1:1" md-gutter="8px">
-					<md-grid-tile ng:repeat="n in [1,2,3,4,5,6,7,8]">
-						<app-tile></app-tile>
+					<md-grid-tile ng:repeat="cell in grid.cells">
+						<app-tile cell="cell"></app-tile>
 					</md-grid-tile>
 				</md-grid-list>
 			</md-content>

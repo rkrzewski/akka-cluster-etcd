@@ -82,7 +82,8 @@ lazy val clusterMonitor = project.
                 "org.webjars" % "angularjs" % "1.4.7",
                 "org.webjars.npm" % "angular-material" % "0.11.4",
                 "org.webjars.bower" % "roboto-fontface" % "0.4.3",
-                "org.webjars.bower" % "material-design-iconic-font" % "2.1.1"
+                "org.webjars.bower" % "material-design-iconic-font" % "2.1.1",
+                "org.webjars" % "lodash" % "3.10.1"
             ),
             // pipelineStages := Seq(rjs, digest, gzip),
             RjsKeys.webJarCdns := Map.empty,
@@ -92,7 +93,8 @@ lazy val clusterMonitor = project.
                     "angular" -> "lib/angularjs/angular",
                     "angular-animate" -> "lib/angularjs/angular-animate",
                     "angular-aria" -> "lib/angularjs/angular-aria",
-                    "angular-material" -> "lib/angular-material/angular-material"
+                    "angular-material" -> "lib/angular-material/angular-material",
+                    "lodash" -> "lib/lodash/lodash"
                 ),
                 "shim" -> WebJs.JS.Object(
                     "angular" -> WebJs.JS.Object(
@@ -107,6 +109,9 @@ lazy val clusterMonitor = project.
                     ),
                     "angular-ui-router" -> WebJs.JS.Object(
                         "deps" -> WebJs.JS.Array("angular")
+                    ),
+                    "lodash" -> WebJs.JS.Object(
+                        "exports" -> "_"
                     )
                 )
             )
