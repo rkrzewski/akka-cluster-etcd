@@ -67,6 +67,8 @@ trait Routes {
     }
   } ~ path("ws") {
     handleWith(wsHandler)
-  }
+  } ~ path("") {
+    getFromResource("public/index.html")
+  } ~ getFromResourceDirectory("public")
 
 }
