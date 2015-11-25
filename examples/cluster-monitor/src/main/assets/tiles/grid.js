@@ -11,7 +11,7 @@ define([ "./tiles_module", "lodash" ], function(module, _) {
 		$scope.$on("Connected", function() {
 			cells.splice(0, cells.length);
 		});
-		
+
 		$scope.$on("MemberUp", function(event, data) {
 			var memberIp = ip(data.member.uniqueAddress.address);
 			if(_.find(cells, { ip : memberIp }) === undefined) {
@@ -26,7 +26,7 @@ define([ "./tiles_module", "lodash" ], function(module, _) {
 				$scope.$digest();
 			}
 		});
-		
+
 		$scope.$on("MemberRemoved", function(event, data) {
 			var memberIp = ip(data.member.uniqueAddress.address);
 			var idx = _.findIndex(cells, { ip : memberIp });
@@ -37,17 +37,14 @@ define([ "./tiles_module", "lodash" ], function(module, _) {
 		});
 
 		$scope.$on("LeaderChanged", function(event, data) {
-			var curLeader = _.find(cells, {leader : true});
-			if(curLeader) {
-				curLeader.leader = false;
-			}
-			if(data.leader) {
-				var leaderIp = ip(data.leader);
-				var newLeader = _.find(cells, { ip : leaderIp });
-				if(newLeader) {
-					newLeader.leader = true;
+			var newLeaderIp = data.leader ? ip(data.leader) : undefined;
+			_.forEach(cells, function(cell) {
+				if(cell.ip === newLeaderIp) {
+					cell.leader = true;
+				} else {
+					cell.leader = false;
 				}
-			}
+			});
 			$scope.$digest();
 		});
 
@@ -79,6 +76,6 @@ define([ "./tiles_module", "lodash" ], function(module, _) {
 				member.reachable = true;
 			}
 			$scope.$digest();
-		});		
+		});
 	}]);
 });
