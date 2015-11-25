@@ -1,9 +1,23 @@
-<md-whiteframe class="md-whiteframe-1dp" layout-fill>
-<div>{{cell.ip}}</div>
-<div>{{cell.status}}
-<div ng:if="cell.leader">cluster leader</div>
-<div ng:repeat="role in cell.roles">
-{{role}} <span ng:if="cell.roleLeader[role]">leader</span>
-</div>
-<div ng:if="!cell.reachable">Unreachable</div>
+<md-whiteframe class="md-whiteframe-1dp" layout-fill layout="column" layout-align="space-between center">
+	<div layout="column" layout-align="space-between center" layout-fill>
+		<div class="header">
+			<span>
+				<md-icon ng-show="cell.leader" class="zmdi zmdi-star-outline star" title="cluster leader"></md-icon>
+				{{cell.ip}}
+			</span>
+			<md-progress-linear ng-show="!cell.reachable" class="md-warn" md-mode="indeterminate" title="node is unreachable"></md-progress-linear>
+		</div>
+		<div class="role">
+			<div ng-repeat="role in cell.roles">
+			<span>
+				<md-icon ng-show="cell.roleLeader[role]" class="zmdi zmdi-star-outline star" title="role leader"></md-icon>
+				{{role}}
+			</span>
+			</div>
+		</div>
+		<div class="footer">
+			 <md-icon class="zmdi zmdi-eject" title="leave cluster"></md-icon>
+			 <md-icon class="zmdi zmdi-power" title="power off"></md-icon>
+		</div>
+	</div>
 </md-whiteframe>

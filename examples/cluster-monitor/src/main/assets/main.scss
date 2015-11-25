@@ -9,3 +9,29 @@ $zmdi-font-path: "../lib/material-design-iconic-font/dist/fonts";
 [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
   display: none !important;
 }
+
+md-grid-tile {
+  text-align: center;
+  div.header, div.footer {
+    width: 100%;
+    padding: 15px;
+    height: 50px;
+  }
+  .header {
+    border-bottom: solid 1px #ccc;
+  }
+  .footer {
+    border-top: solid 1px #ccc;
+    text-align: right;
+  }
+  md-icon {
+    font-size: 20px;
+  }
+  span {
+    position : relative;
+  }
+  md-icon.star {
+    position: absolute;
+    left: -25px;
+  }
+}
