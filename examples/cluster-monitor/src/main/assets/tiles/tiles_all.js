@@ -1,2 +1,0 @@
-define([ "./grid", "./tile" ], function() {
-});

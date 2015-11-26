@@ -1,4 +1,4 @@
-define([ "./tiles_module", "lodash" ], function(module, _) {
+define([ "./app_module", "lodash" ], function(module, _) {
 	"use strict";
 	module.controller("Grid", ["$scope", function($scope) {
 		var addrRE = /akka\..*:\/\/.*@(.+):.*/;

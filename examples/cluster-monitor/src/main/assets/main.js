@@ -1,3 +1,3 @@
-require([ "angular", "app_all" ], function(angular) {
+require([ "angular", "./connector", "./grid", "./tile" ], function(angular) {
 	angular.bootstrap(window.document, [ "app" ]);
 });

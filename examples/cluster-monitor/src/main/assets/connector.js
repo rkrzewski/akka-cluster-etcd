@@ -1,4 +1,4 @@
-define([ "./ws_module" ], function(module) {
+define([ "./app_module" ], function(module) {
 	module.service("connector", [ "$window", "$location", "$timeout", "$log", "$rootScope",
 		function($window, $location, $timeout, $log, $rootScope) {
 			var reconnectDelay = 15000;
@@ -51,7 +51,7 @@ define([ "./ws_module" ], function(module) {
 			});
 		});
 	}]);
-	
+
 	module.run(["connector", function(connector) {
 		connector.connect();
 	}]);
