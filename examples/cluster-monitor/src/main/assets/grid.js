@@ -16,6 +16,7 @@ define([ "./app_module", "lodash" ], function(module, _) {
 			var memberIp = ip(data.member.uniqueAddress.address);
 			if(_.find(cells, { ip : memberIp }) === undefined) {
 				cells.push({
+					address : data.member.uniqueAddress.address,
 					ip : memberIp,
 					leader : false,
 					roles : data.member.roles,

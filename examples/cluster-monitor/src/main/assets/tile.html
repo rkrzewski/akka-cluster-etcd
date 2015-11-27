@@ -16,8 +16,14 @@
 			</div>
 		</div>
 		<div class="footer">
-			 <md-icon class="zmdi zmdi-eject" title="leave cluster"></md-icon>
-			 <md-icon class="zmdi zmdi-power" title="power off"></md-icon>
+			<md-button class="md-icon-button" aria-label="leave cluster" title="leave cluster"
+				ng-click="shutdown(cell.address, false)">
+				<md-icon class="zmdi zmdi-eject" ></md-icon>
+			</md-button>
+			<md-button class="md-icon-button" aria-label="power off" title="power off"
+				ng-click="shutdown(cell.address, true)">
+				<md-icon class="zmdi zmdi-power"></md-icon>
+			</md-button>
 		</div>
 	</div>
 </md-whiteframe>

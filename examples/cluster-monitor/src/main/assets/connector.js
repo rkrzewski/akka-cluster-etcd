@@ -34,8 +34,14 @@ define([ "./app_module" ], function(module) {
 					}
 				};
 			}
+			function send(msg) {
+				if(active) {
+					ws.send(JSON.stringify(msg));
+				}
+			}
 			return {
 				connect : connect,
+				send : send,
 				active : function() {
 					return active;
 				}
