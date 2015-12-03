@@ -23,6 +23,10 @@ md-grid-tile {
   .footer {
     border-top: solid 1px #ccc;
     text-align: right;
+    .left {
+      float: left;
+      padding-top: 10px;
+    }
   }
   md-icon {
     font-size: 20px;

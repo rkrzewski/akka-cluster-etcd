@@ -106,5 +106,11 @@ object JsonProtocol extends DefaultJsonProtocol {
     }
   }
 
+  implicit val welcomeMessageWriter = new JsonWriter[WelcomeMessage] {
+    def write(msg: WelcomeMessage) = JsObject(
+      "event" → JsString("WelcomeMessage"),
+      "address" → msg.address.toJson)
+  }
+
   implicit val shutdownCommandReader = jsonFormat2(ShutdownCommand)
 }

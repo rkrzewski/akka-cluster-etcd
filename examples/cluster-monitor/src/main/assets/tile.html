@@ -16,6 +16,7 @@
 			</div>
 		</div>
 		<div class="footer">
+			<md-icon ng-show="cell.isConnected()" class="zmdi zmdi-input-power zmdi-hc-rotate-270 left" title="currently connected"></md-icon>
 			<md-button class="md-icon-button" aria-label="leave cluster" title="leave cluster"
 				ng-click="shutdown(cell.address, false)">
 				<md-icon class="zmdi zmdi-eject" ></md-icon>

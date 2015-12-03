@@ -3,6 +3,7 @@ package pl.caltha.akka.cluster.monitor.frontend
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
+import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.ClusterDomainEvent
 import akka.http.scaladsl.marshalling.ToResponseMarshallable.apply
 import akka.http.scaladsl.model.HttpEntity.apply
@@ -31,6 +32,8 @@ trait Routes {
 
   implicit def materializer: Materializer
 
+  def cluster: Cluster
+
   val MaxEventsBacklog = 100
 
   def jsonDecoder[T: JsonReader]: Flow[Message, T, Unit] =
@@ -52,9 +55,10 @@ trait Routes {
       case Some(upgrade) ⇒
         import JsonProtocol._
         val wsSink = jsonDecoder[ShutdownCommand].to(Sink.actorSubscriber(ShutdownCommandForwarder.props))
-        val wsSource = Source.actorPublisher[ClusterDomainEvent](ClusterEventPublisher.props(MaxEventsBacklog)).
-          via(jsonEncoder[ClusterDomainEvent])
-        upgrade.handleMessagesWithSinkSource(wsSink, wsSource)
+        val welcomeSource = Source.single(WelcomeMessage(cluster.selfAddress)).via(jsonEncoder)
+        val eventsSource = Source.actorPublisher[ClusterDomainEvent](ClusterEventPublisher.props(MaxEventsBacklog)).
+          via(jsonEncoder)
+        upgrade.handleMessagesWithSinkSource(wsSink, welcomeSource.concat(eventsSource))
       case None ⇒ HttpResponse(400, entity = "Missing Upgrade header")
     }
   }

@@ -8,8 +8,15 @@ define([ "./app_module", "lodash" ], function(module, _) {
 		var cells = [];
 		this.cells = cells;
 
+		var connectedServerIp;
+
 		$scope.$on("Connected", function() {
 			cells.splice(0, cells.length);
+			connectedServerIp = undefined;
+		});
+
+		$scope.$on("WelcomeMessage", function(event, data) {
+				connectedServerIp = ip(data.address);
 		});
 
 		$scope.$on("MemberUp", function(event, data) {
@@ -22,7 +29,10 @@ define([ "./app_module", "lodash" ], function(module, _) {
 					roles : data.member.roles,
 					roleLeader : {},
 					status : data.member.status,
-					reachable : true
+					reachable : true,
+					isConnected : function() {
+						return memberIp === connectedServerIp;
+					}
 				});
 				$scope.$digest();
 			}

@@ -4,6 +4,7 @@ import scala.util.Failure
 import scala.util.Success
 
 import akka.actor.ActorSystem
+import akka.cluster.Cluster
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
@@ -19,6 +20,8 @@ class FrontendBehavior(actorSystem: ActorSystem, log: LoggingAdapter)
   implicit val executionContext = actorSystem.dispatcher
 
   implicit val materializer: Materializer = ActorMaterializer()
+
+  def cluster = Cluster(actorSystem)
 
   val binding = Http().bindAndHandle(routes, "0.0.0.0", 8080)
   binding.onComplete {

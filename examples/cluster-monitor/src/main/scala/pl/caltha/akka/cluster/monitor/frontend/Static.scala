@@ -27,6 +27,8 @@ import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.FlowGraph
 import akka.stream.scaladsl.Zip
 
+import spray.json._
+
 class Static extends Actor with ActorLogging {
 
   implicit val actorSystem = context.system
@@ -63,22 +65,25 @@ class Static extends Actor with ActorLogging {
     UnreachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.up)),
     MemberRemoved(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.removed), MemberStatus.down))
 
+  def jsonEncoder[T: JsonWriter]: Flow[T, Message, Unit] =
+    Flow[T].map(e ⇒ TextMessage.Strict(e.toJson.compactPrint))
+
   // send events from scenario in an infinite loop, once every 5 seconds
   val wsSource: Source[Message, _] = Source() { implicit b ⇒
     import FlowGraph.Implicits._
-    val events = b.add(Source.repeat(()).mapConcat(_ ⇒ scenario.to[collection.immutable.Iterable]))
+    import JsonProtocol._
+    val welcomeSource = Source.single(WelcomeMessage(AddressFromURIString("akka.tcp://Main@172.17.0.3:2552"))).via(jsonEncoder)
+    val eventsSource = Source.repeat(()).mapConcat(_ ⇒ scenario.to[collection.immutable.Iterable]).via(jsonEncoder)
+
+    val messages = b.add(welcomeSource.concat(eventsSource))
     val ticks = b.add(Source(0.seconds, 5.seconds, ()))
-    val zip = b.add(Zip[ClusterDomainEvent, Unit])
-    val evt = b.add(Flow[(ClusterDomainEvent, Unit)].map { case (e, _) ⇒ e })
-    val format = b.add(Flow[ClusterDomainEvent].map { e ⇒
-      import JsonProtocol._
-      import spray.json._
-      TextMessage.Strict(e.toJson.compactPrint)
-    })
-    events ~> zip.in0
+    val zip = b.add(Zip[Message, Unit])
+    val extract = b.add(Flow[(Message, Unit)].map { case (e, _) ⇒ e })
+
+    messages ~> zip.in0
     ticks ~> zip.in1
-    zip.out ~> evt ~> format
-    format.outlet
+    zip.out ~> extract
+    extract.outlet
   }
 
   private def wsHandler: HttpRequest ⇒ HttpResponse = {
