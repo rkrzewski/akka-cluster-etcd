@@ -126,10 +126,16 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
 
   private val apiV2 = Path / "v2" / "keys"
 
+  def keyPath(key: String) = key.split("/").
+    filter(segment ⇒ segment.length() > 0).
+    foldLeft(apiV2) {
+      case (path, segment) ⇒ path / segment
+    }
+
   private def run(method: HttpMethod, key: String, params: Option[(String, String)]*): Future[EtcdResponse] =
     run(if (method == GET || method == DELETE) {
-      HttpRequest(method, Uri(path = apiV2 / key, query = mkQuery(params.toSeq)))
+      HttpRequest(method, Uri(path = keyPath(key), query = mkQuery(params.toSeq)))
     } else {
-      HttpRequest(method, Uri(path = apiV2 / key), entity = mkEntity(params.toSeq))
+      HttpRequest(method, Uri(path = keyPath(key)), entity = mkEntity(params.toSeq))
     })
 }
