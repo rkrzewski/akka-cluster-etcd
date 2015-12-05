@@ -21,6 +21,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import akka.stream.Materializer
+import akka.stream.SourceShape
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
@@ -69,22 +70,23 @@ class Static extends Actor with ActorLogging {
     Flow[T].map(e ⇒ TextMessage.Strict(e.toJson.compactPrint))
 
   // send events from scenario in an infinite loop, once every 5 seconds
-  val wsSource: Source[Message, _] = Source() { implicit b ⇒
-    import FlowGraph.Implicits._
-    import JsonProtocol._
-    val welcomeSource = Source.single(WelcomeMessage(AddressFromURIString("akka.tcp://Main@172.17.0.3:2552"))).via(jsonEncoder)
-    val eventsSource = Source.repeat(()).mapConcat(_ ⇒ scenario.to[collection.immutable.Iterable]).via(jsonEncoder)
+  val wsSource: Source[Message, _] = Source.fromGraph(
+    FlowGraph.create() { implicit b ⇒
+      import FlowGraph.Implicits._
+      import JsonProtocol._
+      val welcomeSource = Source.single(WelcomeMessage(AddressFromURIString("akka.tcp://Main@172.17.0.3:2552"))).via(jsonEncoder)
+      val eventsSource = Source.repeat(()).mapConcat(_ ⇒ scenario.to[collection.immutable.Iterable]).via(jsonEncoder)
 
-    val messages = b.add(welcomeSource.concat(eventsSource))
-    val ticks = b.add(Source(0.seconds, 5.seconds, ()))
-    val zip = b.add(Zip[Message, Unit])
-    val extract = b.add(Flow[(Message, Unit)].map { case (e, _) ⇒ e })
+      val messages = b.add(welcomeSource.concat(eventsSource))
+      val ticks = b.add(Source.tick(0.seconds, 5.seconds, ()))
+      val zip = b.add(Zip[Message, Unit])
+      val extract = b.add(Flow[(Message, Unit)].map { case (e, _) ⇒ e })
 
-    messages ~> zip.in0
-    ticks ~> zip.in1
-    zip.out ~> extract
-    extract.outlet
-  }
+      messages ~> zip.in0
+      ticks ~> zip.in1
+      zip.out ~> extract
+      SourceShape(extract.outlet)
+    })
 
   private def wsHandler: HttpRequest ⇒ HttpResponse = {
     case req: HttpRequest ⇒ req.header[UpgradeToWebsocket] match {

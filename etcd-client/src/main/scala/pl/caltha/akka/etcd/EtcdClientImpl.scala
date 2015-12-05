@@ -15,6 +15,7 @@ import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.Uri._
 import akka.stream.ActorMaterializer
 import akka.stream.Materializer
+import akka.stream.SourceShape
 import akka.stream.scaladsl._
 import akka.util.ByteString
 
@@ -71,24 +72,25 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     quorum: Boolean): Source[EtcdResponse, Cancellable] = {
     case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Boolean, quorum: Boolean)
     val init = WatchRequest(key, waitIndex, recursive, quorum)
-    Source[EtcdResponse, Cancellable](FlowBreaker[WatchRequest]) { implicit b ⇒
-      breaker ⇒
-        import FlowGraph.Implicits._
+    Source.fromGraph(
+      FlowGraph.create[SourceShape[EtcdResponse], Cancellable](FlowBreaker[WatchRequest]) { implicit b ⇒
+        breaker ⇒
+          import FlowGraph.Implicits._
 
-        val initReq = b.add(Source.single(init))
-        val reqMerge = b.add(Merge[WatchRequest](2))
-        val runWait = b.add(Flow[WatchRequest].mapAsync(1)(req ⇒ {
-          this.wait(req.key, req.waitIndex, req.recursive, req.quorum).map { resp ⇒
-            (req.copy(waitIndex = Some(resp.node.modifiedIndex + 1)), resp)
-          }
-        }))
-        val respUnzip = b.add(Unzip[WatchRequest, EtcdResponse]())
+          val initReq = b.add(Source.single(init))
+          val reqMerge = b.add(Merge[WatchRequest](2))
+          val runWait = b.add(Flow[WatchRequest].mapAsync(1)(req ⇒ {
+            this.wait(req.key, req.waitIndex, req.recursive, req.quorum).map { resp ⇒
+              (req.copy(waitIndex = Some(resp.node.modifiedIndex + 1)), resp)
+            }
+          }))
+          val respUnzip = b.add(Unzip[WatchRequest, EtcdResponse]())
 
-        initReq ~> reqMerge.in(0)
-        reqMerge ~> runWait ~> respUnzip.in
-        respUnzip.out0 ~> breaker ~> reqMerge.in(1)
-        respUnzip.out1
-    }
+          initReq ~> reqMerge.in(0)
+          reqMerge ~> runWait ~> respUnzip.in
+          respUnzip.out0 ~> breaker ~> reqMerge.in(1)
+          SourceShape(respUnzip.out1)
+      })
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -134,7 +136,7 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
 
   private def run(method: HttpMethod, key: String, params: Option[(String, String)]*): Future[EtcdResponse] =
     run(if (method == GET || method == DELETE) {
-      HttpRequest(method, Uri(path = keyPath(key), query = mkQuery(params.toSeq)))
+      HttpRequest(method, Uri(path = keyPath(key)).withQuery(mkQuery(params.toSeq)))
     } else {
       HttpRequest(method, Uri(path = keyPath(key)), entity = mkEntity(params.toSeq))
     })
