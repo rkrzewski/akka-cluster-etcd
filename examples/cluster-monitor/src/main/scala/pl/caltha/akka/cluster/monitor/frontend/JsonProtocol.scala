@@ -62,11 +62,17 @@ object JsonProtocol extends DefaultJsonProtocol {
 
   implicit val memberEventWriter = new JsonWriter[MemberEvent] {
     def write(event: MemberEvent) = event match {
+      case MemberJoined(member) ⇒ JsObject(
+        "event" → JsString("MemberJoined"),
+        "member" → member.toJson)
       case MemberWeaklyUp(member) ⇒ JsObject(
         "event" → JsString("MemberWeaklyUp"),
         "member" → member.toJson)
       case MemberUp(member) ⇒ JsObject(
         "event" → JsString("MemberUp"),
+        "member" → member.toJson)
+      case MemberLeft(member) ⇒ JsObject(
+        "event" → JsString("MemberLeft"),
         "member" → member.toJson)
       case MemberExited(member) ⇒ JsObject(
         "event" → JsString("MemberExited"),
