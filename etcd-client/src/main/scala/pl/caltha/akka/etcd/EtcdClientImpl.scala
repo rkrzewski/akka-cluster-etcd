@@ -2,8 +2,6 @@ package pl.caltha.akka.etcd
 
 import java.net.URLEncoder
 
-import scala.collection.immutable.Traversable
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.actor.ActorSystem
@@ -22,7 +20,6 @@ import akka.util.ByteString
 
 import spray.json._
 
-import pl.caltha.akka.http.HttpRedirects
 import pl.caltha.akka.streams.FlowBreaker
 
 /**
@@ -94,14 +91,12 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     }
   }
 
-  // ---------------------------------------------------------------------------------------------  
+  // ---------------------------------------------------------------------------------------------
 
   private implicit val Materializer: Materializer = ActorMaterializer()
 
   private val client =
     Http(system).outgoingConnection(host, port, settings = httpClientSettings.getOrElse(ClientConnectionSettings(system)))
-
-  private val redirectHandlingClient = HttpRedirects(client, 3)
 
   private val decode = Flow[HttpResponse].mapAsync(1)(response ⇒ {
     response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).
@@ -113,7 +108,7 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
   })
 
   private def run(req: HttpRequest): Future[EtcdResponse] =
-    Source.single(req).via(redirectHandlingClient).via(decode).runWith(Sink.head)
+    Source.single(req).via(client).via(decode).runWith(Sink.head)
 
   private def mkParams(params: Seq[Option[(String, String)]]) =
     params.collect { case Some((k, v)) ⇒ (k, v) }
