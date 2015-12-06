@@ -30,7 +30,7 @@ trait Routes {
 
   def cluster: Cluster
 
-  val MaxEventsBacklog = 100
+  val MaxEventsBacklog: Int = 100
 
   def jsonDecoder[T: JsonReader]: Flow[Message, T, Unit] =
     Flow[Message].mapAsync(1)(_ match {
@@ -58,10 +58,10 @@ trait Routes {
     FlowGraph.create() {
       implicit builder ⇒
         import FlowGraph.Implicits._
-        val welcome = builder.add(welcomeSource.concat(eventsSource))
+        val welcomeAndEvents = builder.add(welcomeSource.concat(eventsSource))
         val keepalive = builder.add(keepaliveSource)
         val merge = builder.add(Merge[Message](2))
-        welcome ~> merge.in(0)
+        welcomeAndEvents ~> merge.in(0)
         keepalive ~> merge.in(1)
         SourceShape(merge.out)
     })
