@@ -22,6 +22,7 @@ import pl.caltha.akka.etcd.EtcdException
 import pl.caltha.akka.etcd.EtcdNode
 import pl.caltha.akka.etcd.EtcdResponse
 import akka.cluster.ClusterEvent._
+import akka.cluster.Member
 
 class ClusterDiscoveryActor(
     etcdClient: EtcdClient,
@@ -130,6 +131,7 @@ class ClusterDiscoveryActor(
   when(Follower) {
     case Event(EtcdResponse("get", EtcdNode(_, _, _, _, _, Some(true), Some(nodes)), _), _) ⇒
       val seeds = nodes.flatMap(_.value).map(AddressFromURIString(_))
+      log.info("attempting to join {}", seeds)
       cluster.joinSeedNodes(seeds)
       cancelTimer("seedsFetch")
       setTimer("seedsJoin", JoinTimeout, settings.seedsJoinTimeout, false)
@@ -151,13 +153,13 @@ class ClusterDiscoveryActor(
     case Event(LeaderChanged(optAddress), _) ⇒
       log.info(s"seen leader change to $optAddress")
       stay()
-    case Event(CurrentClusterState(_, _, _, _, _), _) ⇒
+    case Event(MemberUp(member), _) if member.address == cluster.selfAddress ⇒
       log.info("joined the cluster")
       cancelTimer("seedsFetch")
       cancelTimer("seedsJoin")
       stay()
-    case Event(_: ClusterDomainEvent, _) ⇒
-      stay()      
+    case Event(_: ClusterDomainEvent | CurrentClusterState, _) ⇒
+      stay()
   }
 
   whenUnhandled {
