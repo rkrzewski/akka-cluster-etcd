@@ -12,9 +12,12 @@ import akka.stream.ActorMaterializer
 import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.scaladsl.Keep
 
-class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside {
+class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside with BeforeAndAfterAll {
 
   implicit val system = ActorSystem()
+
+  override def afterAll() =
+    system.terminate()
 
   implicit val exCtx = system.dispatcher
 
