@@ -118,5 +118,10 @@ object JsonProtocol extends DefaultJsonProtocol {
       "address" → msg.address.toJson)
   }
 
+  implicit val keepaliveMessageWriter = new JsonWriter[KeepaliveMessage.type] {
+    def write(msg: KeepaliveMessage.type) = JsObject(
+      "event" → JsString("Keepalive"))
+  }
+
   implicit val shutdownCommandReader = jsonFormat2(ShutdownCommand)
 }
