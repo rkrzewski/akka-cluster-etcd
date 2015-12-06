@@ -112,6 +112,8 @@ class ClusterDiscoveryActor(
       if (seeds.contains(member.address))
         seedList ! SeedListActor.MemberRemoved(member.address.toString)
       stay().using(seeds - member.address)
+    case Event(_: ClusterDomainEvent, _) ⇒
+      stay()
   }
 
   def fetchSeeds() =
