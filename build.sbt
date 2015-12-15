@@ -79,8 +79,8 @@ lazy val clusterMonitor = project.
             (managedClasspath in Test) += (packageBin in Assets).value,
             libraryDependencies ++= Seq(
                 "org.webjars" % "requirejs" % "2.1.20",
-                "org.webjars" % "angularjs" % "1.4.7",
-                "org.webjars.npm" % "angular-material" % "0.11.4",
+                "org.webjars" % "angularjs" % "1.4.8",
+                "org.webjars" % "angular-material" % "1.0.0",
                 "org.webjars.bower" % "roboto-fontface" % "0.4.3",
                 "org.webjars.bower" % "material-design-iconic-font" % "2.1.1",
                 "org.webjars" % "lodash" % "3.10.1"
