@@ -1,6 +1,3 @@
-// workaround for https://jcenter.bintray.com/ artifact caching issues
-resolvers -= Resolver.jcenterRepo
-
 scalaVersion := "2.11.7"
 
 lazy val commonSettings = Seq(
