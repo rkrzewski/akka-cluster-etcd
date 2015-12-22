@@ -55,9 +55,9 @@ trait Routes {
   val keepaliveSource: Source[Message, Any] = Source.tick(30.seconds, 30.seconds, KeepaliveMessage).via(jsonEncoder)
 
   val wsSource: akka.stream.scaladsl.Source[Message, Unit] = Source.fromGraph(
-    FlowGraph.create() {
+    GraphDSL.create() {
       implicit builder ⇒
-        import FlowGraph.Implicits._
+        import GraphDSL.Implicits._
         val welcomeAndEvents = builder.add(welcomeSource.concat(eventsSource))
         val keepalive = builder.add(keepaliveSource)
         val merge = builder.add(Merge[Message](2))

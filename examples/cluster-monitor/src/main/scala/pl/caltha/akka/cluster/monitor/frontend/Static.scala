@@ -25,7 +25,7 @@ import akka.stream.SourceShape
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.FlowGraph
+import akka.stream.scaladsl.GraphDSL
 import akka.stream.scaladsl.Zip
 
 import spray.json._
@@ -71,8 +71,8 @@ class Static extends Actor with ActorLogging {
 
   // send events from scenario in an infinite loop, once every 5 seconds
   val wsSource: Source[Message, _] = Source.fromGraph(
-    FlowGraph.create() { implicit b ⇒
-      import FlowGraph.Implicits._
+    GraphDSL.create() { implicit b ⇒
+      import GraphDSL.Implicits._
       import JsonProtocol._
       val welcomeSource = Source.single(WelcomeMessage(AddressFromURIString("akka.tcp://Main@172.17.0.3:2552"))).via(jsonEncoder)
       val eventsSource = Source.repeat(()).mapConcat(_ ⇒ scenario.to[collection.immutable.Iterable]).via(jsonEncoder)

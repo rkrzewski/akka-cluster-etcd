@@ -1,6 +1,7 @@
 package pl.caltha.akka.etcd
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 import org.scalatest._
 import org.scalatest.Matchers._
@@ -259,14 +260,16 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside with BeforeA
       val source = etcd.watch(baseKey + "watch2", Some(createdIndex), true)
       val sink = TestSink.probe[EtcdResponse]
       val (cancellable, probe) = source.toMat(sink)(Keep.both).run()
-      probe.request(1)
-      probe.expectNext()
-      cancellable.cancel()
-      probe.request(1)
-      // one extra element is returned
-      probe.expectNext()
-      // but stream completes eventually
-      probe.expectComplete()
+      probe.within(1.second) {
+        probe.request(1)
+        probe.expectNext()
+        cancellable.cancel()
+        probe.request(1)
+        // one extra element is returned
+        probe.expectNext()
+        // but stream completes eventually
+        probe.expectComplete()
+      }
     }
   }
 }

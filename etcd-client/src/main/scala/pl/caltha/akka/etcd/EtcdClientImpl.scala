@@ -9,6 +9,7 @@ import akka.actor.Cancellable
 import akka.http.ClientConnectionSettings
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.HttpCharsets._
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.MediaTypes._
 import akka.http.scaladsl.model.Uri
@@ -73,9 +74,9 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Boolean, quorum: Boolean)
     val init = WatchRequest(key, waitIndex, recursive, quorum)
     Source.fromGraph(
-      FlowGraph.create[SourceShape[EtcdResponse], Cancellable](FlowBreaker[WatchRequest]) { implicit b ⇒
+      GraphDSL.create[SourceShape[EtcdResponse], Cancellable](FlowBreaker[WatchRequest]) { implicit b ⇒
         breaker ⇒
-          import FlowGraph.Implicits._
+          import GraphDSL.Implicits._
 
           val initReq = b.add(Source.single(init))
           val reqMerge = b.add(Merge[WatchRequest](2))
@@ -123,7 +124,7 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
 
   private def mkEntity(params: Seq[Option[(String, String)]]) = {
     val present = mkParams(params).map { case (k, v) ⇒ s"${enc(k)}=${enc(v)}" }
-    HttpEntity(ContentType(`application/x-www-form-urlencoded`), present.mkString("&"))
+    HttpEntity(ContentType(`application/x-www-form-urlencoded`, `UTF-8`), present.mkString("&"))
   }
 
   private val apiV2 = Path / "v2" / "keys"
