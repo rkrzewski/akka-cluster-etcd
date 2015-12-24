@@ -7,7 +7,7 @@ lazy val commonSettings = Seq(
 )
 
 val akkaVersion = "2.4.1"
-val akkaStreamsVersion = "2.0"
+val akkaStreamsVersion = "2.0.1"
 val scalaTestVersion = "2.2.5"
 val mocitoVersion = "1.10.19"
 
