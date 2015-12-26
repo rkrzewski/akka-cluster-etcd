@@ -1,5 +1,7 @@
 package pl.caltha.akka.etcd
 
+import akka.testkit.TestKit
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -17,8 +19,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside with BeforeA
 
   implicit val system = ActorSystem()
 
-  override def afterAll() =
-    system.terminate()
+  override def afterAll() = TestKit.shutdownActorSystem(system)
 
   implicit val exCtx = system.dispatcher
 

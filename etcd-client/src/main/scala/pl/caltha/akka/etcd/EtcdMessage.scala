@@ -92,14 +92,21 @@ object EtcdError {
 }
 
 /**
- * Represents a node in `etcd` key space.
- *
- * @param key the node's key. In case of nested nodes, is prepended with a path composed of parent directory nodes' keys, separated with `/` characters
- * @param createdIndex journal index at which the node was created.
- * @param modifiedIndex journal index at which the node was most recently modified.
- * @param expiration node expiration time.
- * @param value the value stored in the node.
- * @param dir a flag indicating if the node is a directory or leaf ("file") node.
- * @param nodes directory's immediate child nodes, returned on a recursive `get` operation.
- */
-case class EtcdNode(key: String, createdIndex: Int, modifiedIndex: Int, expiration: Option[ZonedDateTime], value: Option[String], dir: Option[Boolean], nodes: Option[List[EtcdNode]])
+  * Represents a node in `etcd` key space.
+  *
+  * @param key the node's key. In case of nested nodes, is prepended with a path composed of parent directory
+  *            nodes' keys, separated with `/` characters
+  * @param createdIndex journal index at which the node was created.
+  * @param modifiedIndex journal index at which the node was most recently modified.
+  * @param expiration node expiration time.
+  * @param value the value stored in the node.
+  * @param dir a flag indicating if the node is a directory or leaf ("file") node.
+  * @param nodes directory's immediate child nodes, returned on a recursive `get` operation.
+  */
+case class EtcdNode(key: String,
+                    createdIndex: Int,
+                    modifiedIndex: Int,
+                    expiration: Option[ZonedDateTime],
+                    value: Option[String],
+                    dir: Option[Boolean],
+                    nodes: Option[List[EtcdNode]])
