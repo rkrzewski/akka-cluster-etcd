@@ -14,7 +14,7 @@ import scala.concurrent.{ExecutionContext, Promise}
   * cancelling upstream and completing downstream flow on demand.
   */
 object FlowBreaker {
-  def apply[T]: Flow[T, T, Cancellable] = Flow.fromGraph(new FlowBreakerStage[T])
+  def apply[T]: Flow[T, T, Cancellable] = Flow.fromGraph(new FlowBreakerStage[T]).named("flow-breaker")
 
 
   private case object CancelEvent
@@ -49,15 +49,23 @@ object FlowBreaker {
 
     override def createLogicAndMaterializedValue(inheritedAttributes: Attributes) = {
       val cancellable = new FlowBreakerCancellable
+
+
       val logic = new GraphStageLogic(shape) {
-        override def preStart() = {
-          val callback = getAsyncCallback[CancelEvent.type] { _ => completeStage() }
-          cancellable.registerWith(callback)
-          pull(in)
+        val callback = {
+          val c = getAsyncCallback[CancelEvent.type] { _ => completeStage() }
+          cancellable.registerWith(c)
+          c
         }
 
-        setHandler(in, eagerTerminateInput)
-        setHandler(out, eagerTerminateOutput)
+        setHandler(in, new InHandler {
+          override def onPush() = push(out, grab(in))
+        })
+
+        setHandler(out, new OutHandler {
+          override def onPull() = pull(in)
+        })
+
       }
 
       (logic, cancellable)
