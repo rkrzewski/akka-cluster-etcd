@@ -1,28 +1,26 @@
 package pl.caltha.akka.cluster.multijvm
 
-import scala.annotation.varargs
+import akka.cluster.Cluster
+import akka.cluster.ClusterEvent.{CurrentClusterState, MemberUp}
+import akka.http.ClientConnectionSettings
+import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
+import com.typesafe.config.ConfigFactory
+import pl.caltha.akka.cluster.{ClusterDiscovery, ClusterDiscoverySettings}
+import pl.caltha.akka.etcd.EtcdClient
+
+import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.util.Random
-import com.typesafe.config.ConfigFactory
-import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.CurrentClusterState
-import akka.cluster.ClusterEvent.MemberUp
-import akka.remote.testkit.MultiNodeConfig
-import akka.remote.testkit.MultiNodeSpec
-import akka.http.ClientConnectionSettings
-import pl.caltha.akka.cluster.ClusterDiscovery
-import pl.caltha.akka.cluster.ClusterDiscoverySettings;
-import pl.caltha.akka.etcd.EtcdClient
-import scala.concurrent.Await
 
 final case class PrimarySeedElectionMultiNodeConfig() extends MultiNodeConfig {
   val first = role("first")
   val second = role("second")
   val third = role("third")
-  commonConfig(ConfigFactory.parseString(s"""
-    |akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
-    |akka.cluster.discovery.etcd.timeouts.etcdRetry = 500 ms
-    |akka.loglevel = INFO
+  commonConfig(ConfigFactory.parseString(
+    s"""
+       |akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
+       |akka.cluster.discovery.etcd.timeouts.etcdRetry = 500 ms
+       |akka.loglevel = INFO
    """.stripMargin))
 }
 
@@ -31,11 +29,9 @@ class PrimarySeedElectionMultiJvmNode2 extends PrimarySeedElectionSpec
 class PrimarySeedElectionMultiJvmNode3 extends PrimarySeedElectionSpec
 
 abstract class PrimarySeedElectionSpec(multiNodeConfig: PrimarySeedElectionMultiNodeConfig)
-    extends MultiNodeSpec(multiNodeConfig) with ClusterDiscoverySpec {
+  extends MultiNodeSpec(multiNodeConfig) with ClusterDiscoverySpec {
 
   def this() = this(PrimarySeedElectionMultiNodeConfig())
-
-  import multiNodeConfig._
 
   override def beforeAll() = {
     super.beforeAll()
