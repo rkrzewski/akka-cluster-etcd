@@ -1,7 +1,7 @@
 package pl.caltha.akka.streams
 
-import akka.actor.{Cancellable, ActorSystem}
-import akka.stream.scaladsl.{Keep, FlowGraph, Source}
+import akka.actor.{ActorSystem, Cancellable}
+import akka.stream.scaladsl.{Keep, Source}
 import akka.stream.testkit.scaladsl.TestSink
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.{TestKit, TestKitBase}
@@ -14,14 +14,7 @@ class FlowBreakerSpec extends FlatSpec with Matchers with TestKitBase with Befor
   override implicit lazy val system: ActorSystem = ActorSystem("FlowBreakerSpec")
   implicit val mat: Materializer = ActorMaterializer()
 
-  def makeBreakable[T](source: Source[T, _]): Source[T, Cancellable] =
-    Source[T, Cancellable](FlowBreaker[T]) { implicit b => breaker =>
-      import FlowGraph.Implicits._
-      val s = b.add(source)
-      s ~> breaker
-
-      breaker.outlet
-    }
+  def makeBreakable[T](source: Source[T, _]): Source[T, Cancellable] = source.viaMat(FlowBreaker[T])(Keep.right)
 
   "FlowBreaker when canceled" should "complete a running stream of elements" in {
     val source = makeBreakable(Source.repeat(42))
@@ -35,7 +28,7 @@ class FlowBreakerSpec extends FlatSpec with Matchers with TestKitBase with Befor
   }
 
   "FlowBreaker when canceled" should "complete immediately even without upstream elements" in {
-    val source = makeBreakable(Source.lazyEmpty[Int])
+    val source = makeBreakable(Source.maybe[Int])
 
     val sink = TestSink.probe[Int]
     val (cancellable, probe) = source.toMat(sink)(Keep.both).run()
