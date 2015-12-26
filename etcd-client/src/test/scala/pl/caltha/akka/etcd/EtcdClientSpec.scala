@@ -77,7 +77,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside with BeforeA
         case EtcdResponse("get", EtcdNode(_, _, _, _, _, Some(true), Some(nodes)), _) ⇒
           nodes collect {
             case EtcdNode(_, _, _, _, Some(value), _, _) ⇒ value
-          } should contain allOf ("1", "2", "3")
+          } should contain allOf("1", "2", "3")
       }
     }
   }
@@ -200,7 +200,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside with BeforeA
             case EtcdNode(Key(seq), _, _, _, Some(value), _, _) ⇒ (seq.toInt, value)
           }).unzip
           keys shouldBe sorted
-          values should contain inOrderOnly ("1", "2", "3")
+          values should contain inOrderOnly("1", "2", "3")
       }
     }
   }
@@ -244,7 +244,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside with BeforeA
       whenReady(etcd.watch(baseKey + "watch1", Some(createdIndex), true).take(3).runFold(Seq[EtcdResponse]()) {
         case (resps, r) ⇒ r +: resps
       }) { resps ⇒
-        resps.map(_.node.value.get).reverse should contain inOrderOnly ("1", "2", "3")
+        resps.map(_.node.value.get).reverse should contain inOrderOnly("1", "2", "3")
       }
     }
   }
@@ -265,9 +265,7 @@ class EtcdClientSpec extends FlatSpec with ScalaFutures with Inside with BeforeA
         probe.expectNext()
         cancellable.cancel()
         probe.request(1)
-        // one extra element is returned
-        probe.expectNext()
-        // but stream completes eventually
+        // streams should complete immediately after cancelation regardless of pending demand
         probe.expectComplete()
       }
     }

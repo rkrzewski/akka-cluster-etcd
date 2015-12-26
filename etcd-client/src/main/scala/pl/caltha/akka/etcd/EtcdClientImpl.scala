@@ -25,10 +25,10 @@ import spray.json._
 import pl.caltha.akka.streams.FlowBreaker
 
 /**
- * `etcd` client implementation.
- */
+  * `etcd` client implementation.
+  */
 private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
-    httpClientSettings: Option[ClientConnectionSettings] = None)(implicit system: ActorSystem) extends EtcdClient {
+                                   httpClientSettings: Option[ClientConnectionSettings] = None)(implicit system: ActorSystem) extends EtcdClient {
 
   private def bool(name: String, value: Boolean): Option[(String, String)] =
     if (value) Some(name → value.toString) else None
@@ -40,7 +40,7 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     run(GET, key, bool("recursive", recursive), bool("sorted", sorted))
 
   def wait(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
-    sorted: Boolean, quorum: Boolean): Future[EtcdResponse] =
+           sorted: Boolean, quorum: Boolean): Future[EtcdResponse] =
     run(GET, key, Some("wait" → "true"), opt("waitIndex", waitIndex),
       bool("recursive", recursive), bool("sorted", sorted), bool("quorum", quorum))
 
@@ -48,7 +48,7 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
     run(PUT, key, Some("value" → value), opt("ttl", ttl))
 
   def compareAndSet(key: String, value: String, ttl: Option[Int] = None, prevValue: Option[String] = None,
-    prevIndex: Option[Int] = None, prevExist: Option[Boolean] = None): Future[EtcdResponse] =
+                    prevIndex: Option[Int] = None, prevExist: Option[Boolean] = None): Future[EtcdResponse] =
     run(PUT, key, Some("value" → value), opt("ttl", ttl), opt("prevValue", prevValue),
       opt("prevIndex", prevIndex), opt("prevExist", prevExist))
 
@@ -70,28 +70,32 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
   private implicit val executionContext = system.dispatcher
 
   def watch(key: String, waitIndex: Option[Int] = None, recursive: Boolean,
-    quorum: Boolean): Source[EtcdResponse, Cancellable] = {
+            quorum: Boolean): Source[EtcdResponse, Cancellable] = {
+
     case class WatchRequest(key: String, waitIndex: Option[Int], recursive: Boolean, quorum: Boolean)
     val init = WatchRequest(key, waitIndex, recursive, quorum)
+
     Source.fromGraph(
-      GraphDSL.create[SourceShape[EtcdResponse], Cancellable](FlowBreaker[WatchRequest]) { implicit b ⇒
-        breaker ⇒
-          import GraphDSL.Implicits._
+      GraphDSL.create[SourceShape[EtcdResponse]]() { implicit b ⇒
+        import GraphDSL.Implicits._
 
-          val initReq = b.add(Source.single(init))
-          val reqMerge = b.add(Merge[WatchRequest](2))
-          val runWait = b.add(Flow[WatchRequest].mapAsync(1)(req ⇒ {
-            this.wait(req.key, req.waitIndex, req.recursive, req.quorum).map { resp ⇒
-              (req.copy(waitIndex = Some(resp.node.modifiedIndex + 1)), resp)
-            }
-          }))
-          val respUnzip = b.add(Unzip[WatchRequest, EtcdResponse]())
+        val initReq = b.add(Source.single(init))
+        val reqMerge = b.add(Merge[WatchRequest](2))
+        val runWait = b.add(Flow[WatchRequest].mapAsync(1)(req ⇒ {
+          this.wait(req.key, req.waitIndex, req.recursive, req.quorum).map { resp ⇒
+            (req.copy(waitIndex = Some(resp.node.modifiedIndex + 1)), resp)
+          }
+        }))
+        val respUnzip = b.add(Unzip[WatchRequest, EtcdResponse]())
 
-          initReq ~> reqMerge.in(0)
-          reqMerge ~> runWait ~> respUnzip.in
-          respUnzip.out0 ~> breaker ~> reqMerge.in(1)
-          SourceShape(respUnzip.out1)
-      })
+        // @formatter:off
+        initReq                   ~> reqMerge.in(0)
+        respUnzip.out0            ~> reqMerge.in(1)
+                                     reqMerge       ~> runWait ~> respUnzip.in
+        // @formatter:on
+
+        SourceShape(respUnzip.out1)
+      }).named("watch").viaMat(FlowBreaker[EtcdResponse])(Keep.right)
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -104,10 +108,10 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
   private val decode = Flow[HttpResponse].mapAsync(1)(response ⇒ {
     response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).
       map(_.utf8String).map { body ⇒
-        import EtcdJsonProtocol._
-        if (response.status.isSuccess) body.parseJson.convertTo[EtcdResponse]
-        else throw EtcdException(body.parseJson.convertTo[EtcdError])
-      }
+      import EtcdJsonProtocol._
+      if (response.status.isSuccess) body.parseJson.convertTo[EtcdResponse]
+      else throw EtcdException(body.parseJson.convertTo[EtcdError])
+    }
   })
 
   private def run(req: HttpRequest): Future[EtcdResponse] =
