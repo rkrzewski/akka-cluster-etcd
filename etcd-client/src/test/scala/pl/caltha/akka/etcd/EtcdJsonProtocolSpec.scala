@@ -1,12 +1,10 @@
 package pl.caltha.akka.etcd
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import spray.json._
-import EtcdJsonProtocol._
-import java.time.temporal.TemporalField
-import java.time.temporal.ChronoField
 import java.time.Month
+
+import org.scalatest.{FlatSpec, Matchers}
+import pl.caltha.akka.etcd.EtcdJsonProtocol._
+import spray.json._
 
 class EtcdJsonProtocolSpec extends FlatSpec with Matchers {
 

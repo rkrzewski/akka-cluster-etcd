@@ -1,17 +1,16 @@
 package pl.caltha.akka.etcd
 
-import scala.collection.immutable.Traversable
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import akka.actor.ActorSystem
-import akka.actor.Cancellable
+import akka.actor.{ActorSystem, Cancellable}
 import akka.http.ClientConnectionSettings
 import akka.stream.scaladsl.Source
 
+import scala.concurrent.Future
+
 /**
- * `etcd` client API
- */
+  * `etcd` client API
+  *
+  * @see [[https://coreos.com/etcd/docs/latest/api.html etcd API documentation]]
+  */
 trait EtcdClient {
 
   def get(key: String, recursive: Boolean = false, sorted: Boolean = false): Future[EtcdResponse]
@@ -50,12 +49,12 @@ object EtcdClient {
    *
    * @param host host to connect to.
    * @param port port to connect to, 4001 by default.
-   * @param socketOptions optional socket options for Akka IO.
    * @param httpClientSettings optional client options for Akka HTTP.
    * @param actorSystem the ActorSystem that will be used for materializing HTTP flows and asynchronous processing.
    */
   def apply(host: String, port: Int = 4001,
-    httpClientSettings: Option[ClientConnectionSettings] = None)(implicit actorSystem: ActorSystem) =
+            httpClientSettings: Option[ClientConnectionSettings] = None)
+           (implicit actorSystem: ActorSystem) =
     new EtcdClientImpl(host, port, httpClientSettings)(actorSystem)
 
 }
