@@ -2,7 +2,7 @@ package pl.caltha.akka.cluster.multijvm
 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent.{CurrentClusterState, MemberUp}
-import akka.http.ClientConnectionSettings
+import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import com.typesafe.config.ConfigFactory
 import pl.caltha.akka.cluster.{ClusterDiscovery, ClusterDiscoverySettings}
@@ -11,6 +11,7 @@ import pl.caltha.akka.etcd.EtcdClient
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.util.Random
+
 
 final case class PrimarySeedElectionMultiNodeConfig() extends MultiNodeConfig {
   val first = role("first")
@@ -37,9 +38,9 @@ abstract class PrimarySeedElectionSpec(multiNodeConfig: PrimarySeedElectionMulti
     super.beforeAll()
 
     val discoverySettings = ClusterDiscoverySettings.load(system.settings.config)
-    val httpClientSettings = ClientConnectionSettings(system).copy(
-      connectingTimeout = discoverySettings.etcdConnectionTimeout,
-      idleTimeout = discoverySettings.etcdRequestTimeout)
+    val httpClientSettings = ClientConnectionSettings(system)
+      .withConnectingTimeout(discoverySettings.etcdConnectionTimeout)
+      .withIdleTimeout(discoverySettings.etcdRequestTimeout)
     val etcd = EtcdClient(discoverySettings.etcdHost, discoverySettings.etcdPort, Some(httpClientSettings))
     Await.ready(etcd.delete("/akka", recursive = true), 3.seconds)
   }

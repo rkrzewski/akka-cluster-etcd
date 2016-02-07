@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 import scala.util.Failure
 import scala.util.Success
 
+import akka.NotUsed
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.AddressFromURIString
@@ -16,7 +17,7 @@ import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.model.ws.TextMessage
-import akka.http.scaladsl.model.ws.UpgradeToWebsocket
+import akka.http.scaladsl.model.ws.UpgradeToWebSocket
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
@@ -66,7 +67,7 @@ class Static extends Actor with ActorLogging {
     UnreachableMember(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.up)),
     MemberRemoved(MemberFactory("akka.tcp://Main@172.17.0.5:2552", Set("backend"), MemberStatus.removed), MemberStatus.down))
 
-  def jsonEncoder[T: JsonWriter]: Flow[T, Message, Unit] =
+  def jsonEncoder[T: JsonWriter]: Flow[T, Message, NotUsed] =
     Flow[T].map(e ⇒ TextMessage.Strict(e.toJson.compactPrint))
 
   // send events from scenario in an infinite loop, once every 5 seconds
@@ -89,7 +90,7 @@ class Static extends Actor with ActorLogging {
     })
 
   private def wsHandler: HttpRequest ⇒ HttpResponse = {
-    case req: HttpRequest ⇒ req.header[UpgradeToWebsocket] match {
+    case req: HttpRequest ⇒ req.header[UpgradeToWebSocket] match {
       case Some(upgrade) ⇒
         upgrade.handleMessagesWithSinkSource(wsSink, wsSource)
       case None ⇒ HttpResponse(400, entity = "Missing Upgrade header")

@@ -6,8 +6,7 @@ lazy val commonSettings = Seq(
     scalaVersion := "2.11.7"
 )
 
-val akkaVersion = "2.4.1"
-val akkaStreamsVersion = "2.0.1"
+val akkaVersion = "2.4.2-RC2"
 val scalaTestVersion = "2.2.5"
 val mocitoVersion = "1.10.19"
 
@@ -18,9 +17,9 @@ lazy val client = project.
         libraryDependencies ++= Seq(
             "com.typesafe.akka" %% "akka-actor" % akkaVersion,
             "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-            "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamsVersion,
-            "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamsVersion,
-            "com.typesafe.akka" %% "akka-stream-testkit-experimental" % akkaStreamsVersion % "test",
+            "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % "test",
+            "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion,
+            "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
             "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
             "org.mockito" % "mockito-core" % mocitoVersion % "test"
         )

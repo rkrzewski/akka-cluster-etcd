@@ -6,7 +6,6 @@ import scala.concurrent.Future
 
 import akka.actor.ActorSystem
 import akka.actor.Cancellable
-import akka.http.ClientConnectionSettings
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.HttpCharsets._
@@ -14,6 +13,7 @@ import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.MediaTypes._
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.Uri._
+import akka.http.scaladsl.settings.ClientConnectionSettings
 import akka.stream.ActorMaterializer
 import akka.stream.Materializer
 import akka.stream.SourceShape
