@@ -16,47 +16,35 @@ import scala.concurrent.{ExecutionContext, Promise}
 object FlowBreaker {
   def apply[T]: Flow[T, T, Cancellable] = Flow.fromGraph(new FlowBreakerStage[T]).named("flow-breaker")
 
-
-  private case object CancelEvent
-
   private object SameThreadExecutionContext extends ExecutionContext {
     override def execute(runnable: Runnable) = runnable.run()
-    override def reportFailure(cause: Throwable) =
-      throw new IllegalStateException("exception in SameThreadExecutionContext", cause)
-  }
-
-  private class FlowBreakerCancellable extends Cancellable {
-    private val callbackPromise: Promise[AsyncCallback[CancelEvent.type]] = Promise()
-    private val cancelled = new AtomicBoolean(false)
-
-    def registerWith(callback: AsyncCallback[CancelEvent.type]) = callbackPromise.success(callback)
-
-    override def cancel() = {
-      val cancelling = cancelled.compareAndSet(false, true)
-      if (cancelling) callbackPromise.future.map {_.invoke(CancelEvent)}(SameThreadExecutionContext)
-      cancelling
-    }
-
-    override def isCancelled = cancelled.get()
+    override def reportFailure(ex: Throwable) = throw ex
   }
 
   private class FlowBreakerStage[Elem] extends GraphStageWithMaterializedValue[FlowShape[Elem, Elem], Cancellable] {
-
     val in = Inlet[Elem]("in")
     val out = Outlet[Elem]("out")
 
     override val shape = FlowShape(in, out)
 
     override def createLogicAndMaterializedValue(inheritedAttributes: Attributes) = {
-      val cancellable = new FlowBreakerCancellable
+      val signal = Promise[Unit]()
 
+      val cancellable = new Cancellable {
+        val cancelled = new AtomicBoolean(false)
+
+        override def cancel() = {
+          val cancelling = cancelled.compareAndSet(false, true)
+          if (cancelling) signal.success(())
+          cancelling
+        }
+
+        override def isCancelled = cancelled.get()
+      }
 
       val logic = new GraphStageLogic(shape) {
-        val callback = {
-          val c = getAsyncCallback[CancelEvent.type] { _ => completeStage() }
-          cancellable.registerWith(c)
-          c
-        }
+        val callback = getAsyncCallback[Unit] { _ ⇒ completeStage() }
+        signal.future.map { _ ⇒  callback.invoke(()) }(SameThreadExecutionContext)
 
         setHandler(in, new InHandler {
           override def onPush() = push(out, grab(in))
@@ -65,7 +53,6 @@ object FlowBreaker {
         setHandler(out, new OutHandler {
           override def onPull() = pull(in)
         })
-
       }
 
       (logic, cancellable)
