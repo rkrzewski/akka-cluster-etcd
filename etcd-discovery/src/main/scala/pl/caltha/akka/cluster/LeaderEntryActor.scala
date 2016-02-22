@@ -13,12 +13,12 @@ import pl.caltha.akka.etcd.EtcdException
 import pl.caltha.akka.etcd.EtcdResponse
 
 /**
- * Actor responsible for periodical refresh of the /leader entry in etcd
- *
- * @param address: the address of cluster leader node.
- * @param etcdClient: EtcdClient to use.
- * @param settings: cluster discovery settings
- */
+  * Actor responsible for periodical refresh of the /leader entry in etcd
+  *
+  * @param address: the address of cluster leader node.
+  * @param etcdClient: EtcdClient to use.
+  * @param settings: cluster discovery settings
+  */
 class LeaderEntryActor(
   address: String,
   etcdClient: EtcdClient,
@@ -32,10 +32,10 @@ class LeaderEntryActor(
   val refreshInterval = settings.leaderEntryTTL / 2
 
   /**
-   * Refresh the entry at leader path, assuming that it exists and the current value is our node's address.
-   *
-   * This method is used during the normal refresh cycle.
-   */
+    * Refresh the entry at leader path, assuming that it exists and the current value is our node's address.
+    *
+    * This method is used during the normal refresh cycle.
+    */
   def refreshLeaderEntry() =
     etcdClient.compareAndSet(
       key = settings.leaderPath,
@@ -47,12 +47,12 @@ class LeaderEntryActor(
       }.pipeTo(self)
 
   /**
-   * Create the leader entry, assuming it does not exist.
-   *
-   * This method is used when the leader entry has expired while the leader node was unable to reach etcd, or when
-   * the leader entry was hijacked by another node. System operator will eventually shut down one of the contending
-   * leaders, and if the current node prevails it will reclaim the leader entry after it expires.
-   */
+    * Create the leader entry, assuming it does not exist.
+    *
+    * This method is used when the leader entry has expired while the leader node was unable to reach etcd, or when
+    * the leader entry was hijacked by another node. System operator will eventually shut down one of the contending
+    * leaders, and if the current node prevails it will reclaim the leader entry after it expires.
+    */
   def createLeaderEntry() =
     etcdClient.compareAndSet(
       key = settings.leaderPath,

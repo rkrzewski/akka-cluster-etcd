@@ -10,21 +10,21 @@ import akka.actor.Status
 import akka.pattern.pipe
 
 /**
- * This actor will attempt the specified `operation` up to `retries` number of times, sends the
- * result back designated receiver actor and subsequently terminates.
- *
- * @param operation the operation that will be performed
- * @param replyTo the actor that will be informed about the outcome of the operation
- * @param etcd the EtcdClient instance to use
- * @param returnErrors if the operation yields an error response with `errorCode` in this list,
- *        the operation will not be retried, but `EtcdError` will be sent back immediately (this is useful
- *        for compare-and-swap type operations)
- * @param retryDelay the time to wait before retrying the operation
- * @param retries if the operation results `EtcdError` (except those in `returnErrors`) or timeout it
- *        will be retried up to `retries` number of times. When retries are exhausted, the result of last
- *        unsuccessful operation will be sent back. When negative argument is used, retries will be occur
- *        indefinitely.
- */
+  * This actor will attempt the specified `operation` up to `retries` number of times, sends the
+  * result back designated receiver actor and subsequently terminates.
+  *
+  * @param operation the operation that will be performed
+  * @param replyTo the actor that will be informed about the outcome of the operation
+  * @param etcd the EtcdClient instance to use
+  * @param returnErrors if the operation yields an error response with `errorCode` in this list,
+  *        the operation will not be retried, but `EtcdError` will be sent back immediately (this is useful
+  *        for compare-and-swap type operations)
+  * @param retryDelay the time to wait before retrying the operation
+  * @param retries if the operation results `EtcdError` (except those in `returnErrors`) or timeout it
+  *        will be retried up to `retries` number of times. When retries are exhausted, the result of last
+  *        unsuccessful operation will be sent back. When negative argument is used, retries will be occur
+  *        indefinitely.
+  */
 class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], replyTo: ActorRef, etcd: EtcdClient,
     returnErrors: Traversable[Int], retryDelay: FiniteDuration, retries: Int) extends Actor {
 
@@ -35,8 +35,8 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], replyTo
   val receive = attempt(1)
 
   /**
-   * Execute n-th attempt of the operation.
-   */
+    * Execute n-th attempt of the operation.
+    */
   def attempt(num: Int): Receive = {
 
     // Send the request to `etcd` server and schedule a timeout event.
@@ -64,8 +64,8 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], replyTo
   }
 
   /**
-   * Send the message designated receiver and terminate.
-   */
+    * Send the message designated receiver and terminate.
+    */
   def reply(message: Any) = {
     replyTo ! message
     context.stop(self)
@@ -73,25 +73,25 @@ class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], replyTo
 }
 
 /**
- * A factory for `EtcdOperationActor` `Props`.
- */
+  * A factory for `EtcdOperationActor` `Props`.
+  */
 object EtcdOperationActor {
 
   /**
-   * Create `akka.actor.Props` needed to instantiate `EtcdOperationActor`
-   *
-   * @param replyTo the actor that will be informed about the outcome of the operation
-   * @param etcd the EtcdClient instance to use
-   * @param returnErrors if the operation yields an error response with `errorCode` in this list,
-   *        the operation will not be retried, but `EtcdError` will be sent back immediately (this is useful
-   *        for compare-and-swap type operations)
-   * @param retryDelay the time to wait before retrying the operation
-   * @param retries if the operation results `EtcdError` (except those in `returnErrors`) or timeout it
-   *        will be retried up to `retries` number of times. When retries are exhausted, the result of last
-   *        unsuccessful operation will be sent back. When negative argument is used, retries will be occur
-   *        indefinitely.
-   * @param operation the operation that will be performed
-   */
+    * Create `akka.actor.Props` needed to instantiate `EtcdOperationActor`
+    *
+    * @param replyTo the actor that will be informed about the outcome of the operation
+    * @param etcd the EtcdClient instance to use
+    * @param returnErrors if the operation yields an error response with `errorCode` in this list,
+    *        the operation will not be retried, but `EtcdError` will be sent back immediately (this is useful
+    *        for compare-and-swap type operations)
+    * @param retryDelay the time to wait before retrying the operation
+    * @param retries if the operation results `EtcdError` (except those in `returnErrors`) or timeout it
+    *        will be retried up to `retries` number of times. When retries are exhausted, the result of last
+    *        unsuccessful operation will be sent back. When negative argument is used, retries will be occur
+    *        indefinitely.
+    * @param operation the operation that will be performed
+    */
   def props(replyTo: ActorRef, etcd: EtcdClient, returnErrors: Traversable[Int],
     retryDelay: FiniteDuration, retries: Int)(operation: EtcdClient ⇒ Future[EtcdResponse]) =
     Props(classOf[EtcdOperationActor], operation, replyTo, etcd, returnErrors, retryDelay, retries)

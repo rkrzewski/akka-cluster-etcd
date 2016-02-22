@@ -3,27 +3,27 @@ package pl.caltha.akka.etcd
 import java.time.ZonedDateTime
 
 /**
- * Represents a message returned by `etcd`, either [[EtcdResponse]] or [[EtcdError]].
- */
+  * Represents a message returned by `etcd`, either [[EtcdResponse]] or [[EtcdError]].
+  */
 sealed trait EtcdMessage
 
 /**
- * A response returned after a successful operation.
- *
- * @param action action that was performed one of: `get`, `set`, `create`, `delete`, `compareAndSwap`, `compareAndDelete`.
- * @param node the node on which operation was performed
- * @param prevNode previous state of the node before the operation, returned for `set` and `compareAndSwap` operations.
- */
+  * A response returned after a successful operation.
+  *
+  * @param action action that was performed one of: `get`, `set`, `create`, `delete`, `compareAndSwap`, `compareAndDelete`.
+  * @param node the node on which operation was performed
+  * @param prevNode previous state of the node before the operation, returned for `set` and `compareAndSwap` operations.
+  */
 case class EtcdResponse(action: String, node: EtcdNode, prevNode: Option[EtcdNode]) extends EtcdMessage
 
 /**
- * A response returned after a failed operation.
- *
- * @param errorCode numerical error code.
- * @param message textual error message.
- * @param cause additional information about the error.
- * @param index current write index of the node on which operation was requested.
- */
+  * A response returned after a failed operation.
+  *
+  * @param errorCode numerical error code.
+  * @param message textual error message.
+  * @param cause additional information about the error.
+  * @param index current write index of the node on which operation was requested.
+  */
 case class EtcdError(errorCode: Int, message: String, cause: String, index: Int) extends EtcdMessage
 
 /**

@@ -189,13 +189,13 @@ object ClusterDiscoveryActor {
   case object Follower extends State
 
   /**
-   * FSM Data = known cluster nodes
-   */
+    * FSM Data = known cluster nodes
+    */
   type Data = Set[Address]
 
   /**
-   * Message that triggers actor's initialization
-   */
+    * Message that triggers actor's initialization
+    */
   case object Start
   case object Retry
   private case object SeedsFetchTimeout

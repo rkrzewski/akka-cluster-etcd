@@ -6,8 +6,8 @@ import java.time.format.DateTimeFormatter
 import spray.json._
 
 /**
- * Provides Spray JSON format implicits for `etcd` messages.
- */
+  * Provides Spray JSON format implicits for `etcd` messages.
+  */
 object EtcdJsonProtocol extends DefaultJsonProtocol {
 
   /** Spray JSON format for [[EtcdError]] case class. */
