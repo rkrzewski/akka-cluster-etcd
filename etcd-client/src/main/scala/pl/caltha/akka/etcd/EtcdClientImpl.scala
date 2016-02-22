@@ -88,11 +88,11 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
         }))
         val respUnzip = b.add(Unzip[WatchRequest, EtcdResponse]())
 
-        // @formatter:off
+        // @formatter:off format: OFF
         initReq                   ~> reqMerge.in(0)
         respUnzip.out0            ~> reqMerge.in(1)
                                      reqMerge       ~> runWait ~> respUnzip.in
-        // @formatter:on
+        // @formatter:on format: ON
 
         SourceShape(respUnzip.out1)
       }).named("watch").viaMat(FlowBreaker[EtcdResponse])(Keep.right)
