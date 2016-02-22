@@ -108,10 +108,10 @@ private[etcd] class EtcdClientImpl(host: String, port: Int = 4001,
   private val decode = Flow[HttpResponse].mapAsync(1)(response ⇒ {
     response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).
       map(_.utf8String).map { body ⇒
-      import EtcdJsonProtocol._
-      if (response.status.isSuccess) body.parseJson.convertTo[EtcdResponse]
-      else throw EtcdException(body.parseJson.convertTo[EtcdError])
-    }
+        import EtcdJsonProtocol._
+        if (response.status.isSuccess) body.parseJson.convertTo[EtcdResponse]
+        else throw EtcdException(body.parseJson.convertTo[EtcdError])
+      }
   })
 
   private def run(req: HttpRequest): Future[EtcdResponse] =
