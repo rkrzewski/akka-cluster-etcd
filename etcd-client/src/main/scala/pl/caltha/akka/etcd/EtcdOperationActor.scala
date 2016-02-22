@@ -26,7 +26,7 @@ import akka.pattern.pipe
   *        indefinitely.
   */
 class EtcdOperationActor(operation: EtcdClient ⇒ Future[EtcdResponse], replyTo: ActorRef, etcd: EtcdClient,
-    returnErrors: Traversable[Int], retryDelay: FiniteDuration, retries: Int) extends Actor {
+                         returnErrors: Traversable[Int], retryDelay: FiniteDuration, retries: Int) extends Actor {
 
   import EtcdOperationActor._
 
@@ -93,7 +93,7 @@ object EtcdOperationActor {
     * @param operation the operation that will be performed
     */
   def props(replyTo: ActorRef, etcd: EtcdClient, returnErrors: Traversable[Int],
-    retryDelay: FiniteDuration, retries: Int)(operation: EtcdClient ⇒ Future[EtcdResponse]) =
+            retryDelay: FiniteDuration, retries: Int)(operation: EtcdClient ⇒ Future[EtcdResponse]) =
     Props(classOf[EtcdOperationActor], operation, replyTo, etcd, returnErrors, retryDelay, retries)
 
   /** Message sent to self after retryDelay time elapses */

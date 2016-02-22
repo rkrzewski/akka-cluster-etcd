@@ -103,10 +103,5 @@ object EtcdError {
   * @param dir a flag indicating if the node is a directory or leaf ("file") node.
   * @param nodes directory's immediate child nodes, returned on a recursive `get` operation.
   */
-case class EtcdNode(key: String,
-                    createdIndex: Int,
-                    modifiedIndex: Int,
-                    expiration: Option[ZonedDateTime],
-                    value: Option[String],
-                    dir: Option[Boolean],
-                    nodes: Option[List[EtcdNode]])
+case class EtcdNode(key: String, createdIndex: Int, modifiedIndex: Int, expiration: Option[ZonedDateTime],
+                    value: Option[String], dir: Option[Boolean], nodes: Option[List[EtcdNode]])

@@ -26,8 +26,8 @@ import akka.cluster.Member
 
 class ClusterDiscoveryActor(
     etcdClient: EtcdClient,
-    cluster: Cluster,
-    settings: ClusterDiscoverySettings) extends LoggingFSM[ClusterDiscoveryActor.State, ClusterDiscoveryActor.Data] {
+    cluster:    Cluster,
+    settings:   ClusterDiscoverySettings) extends LoggingFSM[ClusterDiscoveryActor.State, ClusterDiscoveryActor.Data] {
 
   import ClusterDiscoveryActor._
 
@@ -57,9 +57,9 @@ class ClusterDiscoveryActor(
 
   def electionBid() =
     etcd(_.compareAndSet(
-      key = settings.leaderPath,
-      value = cluster.selfAddress.toString,
-      ttl = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
+      key       = settings.leaderPath,
+      value     = cluster.selfAddress.toString,
+      ttl       = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
       prevValue = None,
       prevIndex = None,
       prevExist = Some(false)))
@@ -118,9 +118,9 @@ class ClusterDiscoveryActor(
 
   def fetchSeeds() =
     etcd(_.get(
-      key = settings.seedsPath,
+      key       = settings.seedsPath,
       recursive = true,
-      sorted = false))
+      sorted    = false))
 
   onTransition {
     case (_, Follower) ⇒

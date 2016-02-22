@@ -20,9 +20,9 @@ import pl.caltha.akka.etcd.EtcdResponse
   * @param settings: cluster discovery settings
   */
 class LeaderEntryActor(
-  address: String,
+  address:    String,
   etcdClient: EtcdClient,
-  settings: ClusterDiscoverySettings)
+  settings:   ClusterDiscoverySettings)
     extends FSM[LeaderEntryActor.State, LeaderEntryActor.Data] {
 
   import LeaderEntryActor._
@@ -38,9 +38,9 @@ class LeaderEntryActor(
     */
   def refreshLeaderEntry() =
     etcdClient.compareAndSet(
-      key = settings.leaderPath,
-      value = address,
-      ttl = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
+      key       = settings.leaderPath,
+      value     = address,
+      ttl       = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
       prevValue = Some(address),
       prevExist = Some(true)).recover {
         case ex: EtcdException ⇒ ex.error
@@ -55,9 +55,9 @@ class LeaderEntryActor(
     */
   def createLeaderEntry() =
     etcdClient.compareAndSet(
-      key = settings.leaderPath,
-      value = address,
-      ttl = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
+      key       = settings.leaderPath,
+      value     = address,
+      ttl       = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
       prevExist = Some(false)).recover {
         case ex: EtcdException ⇒ ex.error
       }.pipeTo(self)

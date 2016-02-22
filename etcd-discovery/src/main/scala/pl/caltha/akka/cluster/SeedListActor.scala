@@ -16,7 +16,7 @@ import pl.caltha.akka.etcd.EtcdResponse
 
 class SeedListActor(
   etcdClient: EtcdClient,
-  settings: ClusterDiscoverySettings)
+  settings:   ClusterDiscoverySettings)
     extends FSM[SeedListActor.State, SeedListActor.Data] with Stash {
 
   import SeedListActor._
