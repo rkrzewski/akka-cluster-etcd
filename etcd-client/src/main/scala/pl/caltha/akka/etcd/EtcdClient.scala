@@ -1,6 +1,6 @@
 package pl.caltha.akka.etcd
 
-import akka.actor.{ ActorSystem, Cancellable }
+import akka.actor.{ActorSystem, Cancellable}
 import akka.stream.scaladsl.Source
 import akka.http.scaladsl.settings.ClientConnectionSettings
 
