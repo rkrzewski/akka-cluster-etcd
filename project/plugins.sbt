@@ -12,3 +12,5 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.0")
 
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.7.2")
+
+addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.6.0")
