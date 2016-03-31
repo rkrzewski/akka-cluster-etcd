@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: cluster-monitor
+        image: eu.gcr.io/akka-cluster-gke/akka-cluster-etcd/monitor:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CLUSTER_ROLE
+          value: backend

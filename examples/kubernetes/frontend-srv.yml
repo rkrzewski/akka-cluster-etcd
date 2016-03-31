@@ -1,0 +1,11 @@
+apiVersion: v1
+metadata:
+  name: frontend
+kind: Service
+spec:
+  ports:
+  - port: 8080
+  selector:
+    app: frontend
+  type: LoadBalancer
+
