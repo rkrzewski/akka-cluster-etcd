@@ -35,16 +35,16 @@ class SeedListActor(
 
   when(AwaitingInitialState) {
     case Event(InitialState(members), _) ⇒
-      etcd(_.get(settings.seedsPath, true, false))
-      goto(AwaitingRegisterdSeeds).using(AwaitingRegisterdSeedsData(members))
+      etcd(_.get(settings.seedsPath, recursive = true, sorted = false))
+      goto(AwaitingRegisteredSeeds).using(AwaitingRegisteredSeedsData(members))
     case Event(MemberAdded(_) | MemberRemoved(_), _) ⇒
       stash()
       stay()
   }
 
-  when(AwaitingRegisterdSeeds) {
+  when(AwaitingRegisteredSeeds) {
     case Event(EtcdResponse("get", EtcdNode(_, _, _, _, _, _, seedsOpt), _),
-      AwaitingRegisterdSeedsData(currentSeeds)) ⇒
+      AwaitingRegisteredSeedsData(currentSeeds)) ⇒
       seedsOpt match {
         case None ⇒
           unstashAll()
@@ -65,17 +65,17 @@ class SeedListActor(
           goto(AwaitingCommand).using(AwaitingCommandData(addressMapping.toMap))
       }
     case Event(EtcdError(EtcdError.KeyNotFound, _, settings.seedsPath, _),
-      AwaitingRegisterdSeedsData(current)) ⇒
+      AwaitingRegisteredSeedsData(current)) ⇒
       current.foreach { member ⇒
         self ! MemberAdded(member)
       }
       unstashAll()
       goto(AwaitingCommand).using(AwaitingCommandData(Map.empty))
-    case Event(e: EtcdError, AwaitingRegisterdSeedsData(current)) ⇒
+    case Event(e: EtcdError, AwaitingRegisteredSeedsData(current)) ⇒
       log.warning(s"etcd error while fetching registered seeds: $e")
       retryMsg(InitialState(current))
       goto(AwaitingInitialState).using(AwaitingInitialStateData)
-    case Event(Status.Failure(t), AwaitingRegisterdSeedsData(current)) ⇒
+    case Event(Status.Failure(t), AwaitingRegisteredSeedsData(current)) ⇒
       log.warning(s"etcd error while fetching registered seeds", t)
       retryMsg(InitialState(current))
       goto(AwaitingInitialState).using(AwaitingInitialStateData)
@@ -91,7 +91,7 @@ class SeedListActor(
     case Event(command @ MemberRemoved(address), AwaitingCommandData(addressMapping)) ⇒
       addressMapping.get(address) match {
         case Some(key) ⇒
-          etcd(_.delete(key, false))
+          etcd(_.delete(key, recursive = false))
           goto(AwaitingEtcdReply).using(AwaitingEtcdReplyData(command, addressMapping))
         case None ⇒
           stay()
@@ -108,12 +108,12 @@ class SeedListActor(
       unstashAll()
       goto(AwaitingCommand).using(AwaitingCommandData(addressMapping - address))
     case Event(e: EtcdError, AwaitingEtcdReplyData(command, addressMapping)) ⇒
-      log.warning(s"etcd error while handing ${command}: $e")
+      log.warning(s"etcd error while handing $command: $e")
       retryMsg(command)
       unstashAll()
       goto(AwaitingCommand).using(AwaitingCommandData(addressMapping))
     case Event(Status.Failure(t), AwaitingEtcdReplyData(command, addressMapping)) ⇒
-      log.warning(s"etcd error while fetching handing ${command}", t)
+      log.warning(s"etcd error while fetching handing $command", t)
       retryMsg(command)
       unstashAll()
       goto(AwaitingCommand).using(AwaitingCommandData(addressMapping))
@@ -133,13 +133,13 @@ object SeedListActor {
 
   sealed trait State
   case object AwaitingInitialState extends State
-  case object AwaitingRegisterdSeeds extends State
+  case object AwaitingRegisteredSeeds extends State
   case object AwaitingCommand extends State
   case object AwaitingEtcdReply extends State
 
   sealed trait Data
   case object AwaitingInitialStateData extends Data
-  case class AwaitingRegisterdSeedsData(currentSeeds: Set[String]) extends Data
+  case class AwaitingRegisteredSeedsData(currentSeeds: Set[String]) extends Data
   case class AwaitingCommandData(addressMapping: Map[String, String]) extends Data
   case class AwaitingEtcdReplyData(command: Command, addressMapping: Map[String, String]) extends Data
 

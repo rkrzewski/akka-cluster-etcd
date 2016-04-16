@@ -22,7 +22,6 @@ import pl.caltha.akka.etcd.EtcdException
 import pl.caltha.akka.etcd.EtcdNode
 import pl.caltha.akka.etcd.EtcdResponse
 import akka.cluster.ClusterEvent._
-import akka.cluster.Member
 
 class ClusterDiscoveryActor(
     etcdClient: EtcdClient,

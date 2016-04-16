@@ -96,7 +96,7 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
     val seedList = init()
 
     seedList ! InitialState(Set.empty)
-    expectTransitionTo(AwaitingRegisterdSeeds)
+    expectTransitionTo(AwaitingRegisteredSeeds)
 
     seedsPromise.success(noSeedsResp)
     expectTransitionTo(AwaitingCommand)
@@ -112,7 +112,7 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
     val seedList = init()
 
     seedList ! InitialState(Set.empty)
-    expectTransitionTo(AwaitingRegisterdSeeds)
+    expectTransitionTo(AwaitingRegisteredSeeds)
 
     seedsPromise.success(staleSeedsResp)
     expectTransitionTo(AwaitingCommand)
@@ -133,7 +133,7 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
     val seedList = init()
 
     seedList ! InitialState(Set(addr1, addr2))
-    expectTransitionTo(AwaitingRegisterdSeeds)
+    expectTransitionTo(AwaitingRegisteredSeeds)
 
     seedsPromise.success(noSeedsResp)
     expectTransitionTo(AwaitingCommand)
@@ -154,7 +154,7 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
 
     val seedList = init()
     seedList ! InitialState(Set.empty)
-    expectTransitionTo(AwaitingRegisterdSeeds)
+    expectTransitionTo(AwaitingRegisteredSeeds)
 
     seedsPromise.success(noSeedsResp)
     expectTransitionTo(AwaitingCommand)
@@ -178,11 +178,11 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
 
     val seedList = init(settings.copy(etcdRetryDelay = 500.milliseconds))
     seedList ! InitialState(Set.empty)
-    expectTransitionTo(AwaitingRegisterdSeeds)
+    expectTransitionTo(AwaitingRegisteredSeeds)
 
     seedsErrorPromise.failure(failure)
     expectTransitionTo(AwaitingInitialState)
-    expectTransitionTo(AwaitingRegisterdSeeds)
+    expectTransitionTo(AwaitingRegisteredSeeds)
 
     seedsSuccessPromise.success(noSeedsResp)
     expectTransitionTo(AwaitingCommand)
@@ -200,7 +200,7 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
 
     val seedList = init(settings.copy(etcdRetryDelay = 500.milliseconds))
     seedList ! InitialState(Set.empty)
-    expectTransitionTo(AwaitingRegisterdSeeds)
+    expectTransitionTo(AwaitingRegisteredSeeds)
 
     seedsPromise.success(noSeedsResp)
     expectTransitionTo(AwaitingCommand)

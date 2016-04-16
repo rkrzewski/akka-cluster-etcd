@@ -34,10 +34,10 @@ case class ClusterDiscoverySettings(
   import ClusterDiscoverySettings._
 
   val leaderPath: String =
-    s"${etcdPath}$LeaderPath"
+    s"$etcdPath$LeaderPath"
 
   val seedsPath =
-    s"${etcdPath}$SeedsPath"
+    s"$etcdPath$SeedsPath"
 }
 
 object ClusterDiscoverySettings {

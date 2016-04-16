@@ -6,3 +6,6 @@ target/
 .settings/
 .cache*
 .sass-cache/
+.idea/
+*.ipr
+*.iws
