@@ -124,7 +124,7 @@ class ClusterDiscoveryActor(
   onTransition {
     case (_, Follower) ⇒
       log.info("assuming Follower role")
-      cluster.subscribe(self, initialStateMode = InitialStateAsSnapshot, classOf[MemberEvent])
+      cluster.subscribe(self, initialStateMode = InitialStateAsSnapshot, classOf[ClusterDomainEvent])
       setTimer("seedsFetch", SeedsFetchTimeout, settings.seedsFetchTimeout, false)
       fetchSeeds()
   }
