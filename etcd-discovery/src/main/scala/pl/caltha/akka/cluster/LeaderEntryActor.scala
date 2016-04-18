@@ -4,10 +4,10 @@ import akka.actor.FSM
 import akka.actor.Props
 import akka.actor.Status
 import akka.pattern.pipe
-import pl.caltha.akka.etcd.EtcdClient
-import pl.caltha.akka.etcd.EtcdError
-import pl.caltha.akka.etcd.EtcdException
-import pl.caltha.akka.etcd.EtcdResponse
+import me.maciejb.etcd.client.EtcdClient
+import me.maciejb.etcd.client.EtcdError
+import me.maciejb.etcd.client.EtcdException
+import me.maciejb.etcd.client.EtcdResponse
 
 /**
   * Actor responsible for periodical refresh of the /leader entry in etcd

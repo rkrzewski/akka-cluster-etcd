@@ -3,12 +3,17 @@ package pl.caltha.akka.cluster
 import akka.actor.ExtendedActorSystem
 import akka.actor.Extension
 import akka.cluster.Cluster
+import akka.stream.ActorMaterializer
 import akka.http.scaladsl.settings.ClientConnectionSettings
-import pl.caltha.akka.etcd.EtcdClient
+import me.maciejb.etcd.client.EtcdClient
 
 class ClusterDiscoveryImpl(extendedSystem: ExtendedActorSystem) extends Extension {
 
   private implicit val system = extendedSystem
+
+  private implicit val executionContext = extendedSystem.dispatcher
+
+  private implicit val materializer = ActorMaterializer(namePrefix = Some("cluster-discovery"))
 
   val discoverySettings = ClusterDiscoverySettings.load(system.settings.config)
 

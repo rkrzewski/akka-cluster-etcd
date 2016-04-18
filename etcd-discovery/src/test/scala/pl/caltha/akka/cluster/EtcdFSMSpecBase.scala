@@ -15,7 +15,7 @@ import akka.actor.FSM.Transition
 import akka.testkit.TestKit
 import akka.testkit.TestProbe
 
-import pl.caltha.akka.etcd.EtcdClient
+import me.maciejb.etcd.client.EtcdClient
 
 abstract class EtcdFSMSpecBase[State, Data](_system: ActorSystem)
     extends TestKit(_system) with FlatSpecLike with BeforeAndAfterAll with Matchers with MockitoSugar {

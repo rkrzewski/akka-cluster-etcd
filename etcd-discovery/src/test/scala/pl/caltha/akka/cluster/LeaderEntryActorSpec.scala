@@ -1,17 +1,19 @@
 package pl.caltha.akka.cluster
 
-import scala.concurrent.duration.DurationInt
-import akka.actor.FSM.SubscribeTransitionCallBack
-import org.mockito.Mockito
-import pl.caltha.akka.etcd.EtcdResponse
+import java.time.ZonedDateTime
+
 import scala.concurrent.Promise
-import pl.caltha.akka.etcd.EtcdNode
-import java.time.ZonedDateTime
-import pl.caltha.akka.etcd.EtcdNode
-import java.time.ZonedDateTime
-import pl.caltha.akka.etcd.EtcdError
-import pl.caltha.akka.etcd.EtcdException
+import scala.concurrent.duration.DurationInt
+
+import org.mockito.Mockito
+
+import akka.actor.FSM.SubscribeTransitionCallBack
 import akka.stream.StreamTcpException
+
+import me.maciejb.etcd.client.EtcdError
+import me.maciejb.etcd.client.EtcdException
+import me.maciejb.etcd.client.EtcdNode
+import me.maciejb.etcd.client.EtcdResponse
 
 class LeaderEntryActorSpec extends EtcdFSMSpecBase[LeaderEntryActor.State, LeaderEntryActor.Data] {
 

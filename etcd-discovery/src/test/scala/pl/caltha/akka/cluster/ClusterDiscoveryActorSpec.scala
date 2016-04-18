@@ -21,12 +21,12 @@ import akka.testkit.TestFSMRef
 import akka.testkit.TestKit
 import akka.testkit.TestProbe
 
-import pl.caltha.akka.etcd.EtcdClient
-import pl.caltha.akka.etcd.EtcdNode
-import pl.caltha.akka.etcd.EtcdResponse
-import pl.caltha.akka.etcd.EtcdException
-import pl.caltha.akka.etcd.EtcdError
-import pl.caltha.akka.etcd.EtcdCommandException
+import me.maciejb.etcd.client.EtcdClient
+import me.maciejb.etcd.client.EtcdNode
+import me.maciejb.etcd.client.EtcdResponse
+import me.maciejb.etcd.client.EtcdException
+import me.maciejb.etcd.client.EtcdError
+import me.maciejb.etcd.client.EtcdCommandException
 
 class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.State, ClusterDiscoveryActor.Data] {
 

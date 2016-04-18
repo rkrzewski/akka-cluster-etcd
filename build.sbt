@@ -18,35 +18,21 @@ lazy val commonSettings = Seq(
 )
 
 val akkaVersion = "2.4.2"
+val etcdClientVersion = "0.0.2"
 val scalaTestVersion = "2.2.5"
 val mocitoVersion = "1.10.19"
-
-lazy val client = project.
-    in(file("etcd-client")).
-    settings(commonSettings ++ Seq(
-        name := "etcd-client",
-        libraryDependencies ++= Seq(
-            "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-            "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-            "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % "test",
-            "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion,
-            "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
-            "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
-            "org.mockito" % "mockito-core" % mocitoVersion % "test"
-        )
-    ))
 
 import com.typesafe.sbt.SbtMultiJvm
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
 lazy val discovery = project.
     in(file("etcd-discovery")).
-    dependsOn(client).
     settings(commonSettings ++ SbtMultiJvm.multiJvmSettings ++ Seq(
         name := "akka-cluster-discovery-etcd",
         libraryDependencies ++= Seq(
             "com.typesafe.akka" %% "akka-actor" % akkaVersion,
             "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
+            "me.maciejb.etcd-client" %% "etcd-client" % etcdClientVersion,
             "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % "test",
             "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
             "org.mockito" % "mockito-core" % mocitoVersion % "test"

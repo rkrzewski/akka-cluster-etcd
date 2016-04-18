@@ -8,11 +8,11 @@ import akka.actor.Stash
 import akka.actor.Status
 import akka.pattern.pipe
 
-import pl.caltha.akka.etcd.EtcdClient
-import pl.caltha.akka.etcd.EtcdError
-import pl.caltha.akka.etcd.EtcdException
-import pl.caltha.akka.etcd.EtcdNode
-import pl.caltha.akka.etcd.EtcdResponse
+import me.maciejb.etcd.client.EtcdClient
+import me.maciejb.etcd.client.EtcdError
+import me.maciejb.etcd.client.EtcdException
+import me.maciejb.etcd.client.EtcdNode
+import me.maciejb.etcd.client.EtcdResponse
 
 class SeedListActor(
   etcdClient: EtcdClient,

@@ -8,10 +8,10 @@ import org.mockito.Mockito
 import akka.actor.FSM.SubscribeTransitionCallBack
 import akka.actor.actorRef2Scala
 
-import pl.caltha.akka.etcd.EtcdError
-import pl.caltha.akka.etcd.EtcdException
-import pl.caltha.akka.etcd.EtcdNode
-import pl.caltha.akka.etcd.EtcdResponse
+import me.maciejb.etcd.client.EtcdError
+import me.maciejb.etcd.client.EtcdException
+import me.maciejb.etcd.client.EtcdNode
+import me.maciejb.etcd.client.EtcdResponse
 
 class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListActor.Data] {
 
