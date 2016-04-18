@@ -18,7 +18,7 @@ import me.maciejb.etcd.client.EtcdResponse
 class LeaderEntryActorSpec extends EtcdFSMSpecBase[LeaderEntryActor.State, LeaderEntryActor.Data] {
 
   import LeaderEntryActor._
-  import Mockito.{ when }
+  import Mockito.when
 
   override def settings = ClusterDiscoverySettings.load(system.settings.config).copy(
     etcdRetryDelay = 500.milliseconds,
@@ -39,21 +39,22 @@ class LeaderEntryActorSpec extends EtcdFSMSpecBase[LeaderEntryActor.State, Leade
 
     def refreshReq =
       etcd.compareAndSet(
-        key = settings.leaderPath,
-        value = address,
-        ttl = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
+        key       = settings.leaderPath,
+        value     = address,
+        ttl       = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
         prevValue = Some(address),
         prevExist = Some(true))
 
     def recreateReq =
       etcd.compareAndSet(
-        key = settings.leaderPath,
-        value = address,
-        ttl = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
+        key       = settings.leaderPath,
+        value     = address,
+        ttl       = Some(settings.leaderEntryTTL.toSeconds.asInstanceOf[Int]),
         prevExist = Some(false))
 
     def refreshSuccessResp =
-      EtcdResponse("set",
+      EtcdResponse(
+        "set",
         EtcdNode(
           settings.leaderPath,
           100,

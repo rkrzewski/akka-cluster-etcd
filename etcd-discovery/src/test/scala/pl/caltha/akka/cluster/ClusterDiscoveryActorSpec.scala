@@ -30,7 +30,7 @@ import me.maciejb.etcd.client.EtcdCommandException
 
 class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.State, ClusterDiscoveryActor.Data] {
 
-  import Mockito.{ when, verify }
+  import Mockito.{when, verify}
   import ClusterDiscoveryActor._
 
   val selfAddress = Address("akka", "testsystem")
@@ -52,7 +52,8 @@ class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.St
       etcd.createDir(settings.etcdPath, None)
 
     val initSuccessResp = Future.successful(
-      EtcdResponse("created",
+      EtcdResponse(
+        "created",
         EtcdNode(settings.etcdPath, 0, 0, None, None, Some(true), Some(List.empty)),
         None))
 
@@ -70,7 +71,8 @@ class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.St
         Some(false))
 
     val electionBidSuccessResp = Future.successful(
-      EtcdResponse("created",
+      EtcdResponse(
+        "created",
         EtcdNode(settings.etcdPath, 0, 0, None, None, Some(true), Some(List.empty)),
         None))
 
@@ -85,7 +87,8 @@ class ClusterDiscoveryActorSpec extends EtcdFSMSpecBase[ClusterDiscoveryActor.St
       etcd.get(settings.seedsPath, true)
 
     val noSeedsResp = Future.successful(
-      EtcdResponse("get",
+      EtcdResponse(
+        "get",
         EtcdNode(settings.seedsPath, 0, 0, None, None, Some(true), Some(List.empty)),
         None))
   }

@@ -20,7 +20,7 @@ import me.maciejb.etcd.client.EtcdClient
 abstract class EtcdFSMSpecBase[State, Data](_system: ActorSystem)
     extends TestKit(_system) with FlatSpecLike with BeforeAndAfterAll with Matchers with MockitoSugar {
 
-  import Mockito.{ when, verify }
+  import Mockito.{when, verify}
 
   def this() =
     this(ActorSystem("testsystem"))

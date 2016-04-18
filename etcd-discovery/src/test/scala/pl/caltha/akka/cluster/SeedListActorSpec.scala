@@ -16,7 +16,7 @@ import me.maciejb.etcd.client.EtcdResponse
 class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListActor.Data] {
 
   import SeedListActor._
-  import Mockito.{ when }
+  import Mockito.{when}
 
   trait Fixture extends FixtureBase {
 
@@ -31,12 +31,14 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
       etcd.get(settings.seedsPath, true)
 
     val noSeedsResp =
-      EtcdResponse("get",
+      EtcdResponse(
+        "get",
         EtcdNode(settings.seedsPath, 100, 132, None, None, Some(true), Some(List.empty)),
         None)
 
     val staleSeedsResp =
-      EtcdResponse("get",
+      EtcdResponse(
+        "get",
         EtcdNode(settings.seedsPath, 100, 132, None, None, Some(true), Some(List(
           EtcdNode(s"${settings.seedsPath}/131", 131, 131, None, Some(addr1), None, None),
           EtcdNode(s"${settings.seedsPath}/132", 132, 132, None, Some(addr2), None, None)))),
@@ -52,7 +54,8 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
       deleteReq(132)
 
     def deleteResp(deletedKey: Int, createdKey: Int, address: String) =
-      EtcdResponse("delete",
+      EtcdResponse(
+        "delete",
         EtcdNode(s"${settings.seedsPath}/$createdKey", createdKey, deletedKey, None, None, None, None),
         Some(EtcdNode(s"${settings.seedsPath}/$createdKey", createdKey, createdKey, None, Some(address), None, None)))
 
@@ -76,7 +79,8 @@ class SeedListActorSpec extends EtcdFSMSpecBase[SeedListActor.State, SeedListAct
       createReq(addr2)
 
     def createResp(key: Int, address: String) =
-      EtcdResponse("create",
+      EtcdResponse(
+        "create",
         EtcdNode(s"${settings.seedsPath}/$key", key, key, None, Some(address), None, None),
         None)
 
